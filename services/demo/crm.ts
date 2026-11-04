@@ -24,7 +24,7 @@ function available(agent: Pick<DemoAgent, "workdays" | "startMinute" | "endMinut
     && end.getUTCHours() * 60 + end.getUTCMinutes() <= agent.endMinute;
 }
 export function addSystemActivity(state: BusinessState, now: Date, action: string, linked: Partial<Pick<Activity, "clientId" | "leadId" | "appointmentId">> = {}) {
-  if (state.activities.length >= 2000) conflict("Demo activity capacity reached; export the workspace before continuing.");
+  if (state.activities.length >= 2000) conflict("Activity capacity reached; export the workspace before continuing.");
   state.activities.push({
     id: randomUUID(), at: now.toISOString(), action, clientId: null, leadId: null,
     appointmentId: null, channel: "SYSTEM", text: "", ...linked,
@@ -53,7 +53,7 @@ export function applyCrmCommand(state: BusinessState, command: CrmCommand, now: 
     item.profile = command.profile;
     addSystemActivity(state, now, command.action, { clientId: item.id });
   } else if (command.action === "createLead") {
-    if (state.leads.length >= 200) conflict("Demo lead capacity reached.");
+    if (state.leads.length >= 200) conflict("Lead capacity reached.");
     const person = client(command.input.clientId);
     agent(command.input.agentId);
     for (const id of command.input.propertyIds) if (!state.properties.some((item) => item.id === id)) missing();
@@ -95,7 +95,7 @@ export function applyCrmCommand(state: BusinessState, command: CrmCommand, now: 
     if (state.appointments.some((item) => item.id !== existing?.id && item.status === "SCHEDULED"
       && (item.agentId === input.agentId || item.clientId === input.clientId)
       && item.startAt < input.endAt && item.endAt > input.startAt)) conflict("Agent or client already has an overlapping appointment.");
-    if (!existing && state.appointments.length >= 500) conflict("Demo appointment capacity reached.");
+    if (!existing && state.appointments.length >= 500) conflict("Appointment capacity reached.");
     const item = {
       ...input, id: existing?.id ?? randomUUID(), status: "SCHEDULED" as const, feedback: "", interest: "UNKNOWN" as const,
       createdAt: existing?.createdAt ?? now.toISOString(), updatedAt: now.toISOString(), sequence: (existing?.sequence ?? -1) + 1,

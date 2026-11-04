@@ -94,8 +94,13 @@ traced into PDF functions, along with Playwright's required `browsers.json`
 runtime registry. Employment downloads report failures in the workspace
 without navigating away from the dossier. Use at least 1 GiB function memory and allow a
 60-second function duration. Rendering blocks external network access and
-JavaScript. Draft/legal-review notices remain intentional: activating the
-administration does not certify contracts or add electronic signatures.
+JavaScript. Production PDFs omit demonstration/draft banners and include blank
+signature, date and place fields. Generation does not sign or legally certify
+contracts. Identity approval, external legal review and signature confirmations
+remain required for agent activation. Local demonstration PDFs retain their
+warnings, and demonstration pages/APIs are inaccessible while agency mode is
+enabled. Stored text is reproduced unchanged; existing user-entered terms are
+not silently rewritten.
 The Linux/Vercel binary cannot be executed on macOS; verify a PDF after the
 first Vercel deployment.
 

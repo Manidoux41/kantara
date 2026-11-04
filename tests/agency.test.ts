@@ -10,6 +10,10 @@ import { agencyBusiness } from "../services/agency/business";
 import { initialTeam } from "./helpers/team";
 import { createBusinessState } from "../services/demo/business";
 import { calendarIcs } from "../lib/demo/calendar";
+import { productionOverrides, agencyMessages } from "../lib/i18n/production";
+import { legalMessages, informationSections } from "../lib/i18n/legal";
+import { locales } from "../lib/i18n/routing";
+import { guardDemoRequest } from "../services/demo/session";
 
 test("agency encryption authenticates payloads and fails closed on a different key", () => {
   const previous = process.env.AGENCY_ENCRYPTION_KEY;
@@ -31,6 +35,30 @@ test("PostgreSQL aliases distinguish pooled runtime from migration preference", 
   assert.equal(databaseUrl(environment), environment.DATABASE_URL_POOLED);
   assert.equal(databaseUrl(environment, true), environment.POSTGRES_URL);
   assert.equal(databaseUrl({ PRISMA_DATABASE_URL: "prisma+postgres://not-a-pg-connection" }), undefined);
+});
+test("live agency mode closes local demo APIs instead of exposing fictional workspaces", () => {
+  const previous = process.env.AGENCY_MODE;
+  try {
+    process.env.AGENCY_MODE = "production";
+    assert.throws(() => guardDemoRequest(new Request("http://localhost:3000/api/demo/team"), "development"), /local development/);
+  } finally { if (previous === undefined) delete process.env.AGENCY_MODE; else process.env.AGENCY_MODE = previous; }
+});
+test("production translations and every displayed legal section have no fictional or draft labels", () => {
+  const fictional = /\b(?:demo(?:nstration)?|ficti\w*|prototype|simulat\w*|draft|brouillon)\b|សាកល្បង|虚构|演示|原型|架空|デモ/iu;
+  for (const locale of locales) {
+    assert.doesNotMatch(JSON.stringify(productionOverrides(locale)), fictional, locale);
+    const agency = agencyMessages(locale);
+    for (const key of ["employment", "generateEmployment", "contractHelp", "createContract", "hiringFileHelp"] as const) {
+      assert.doesNotMatch(agency[key], fictional, `${locale}/${key}`);
+    }
+    const legal = legalMessages(locale, true);
+    for (const sections of Object.values(informationSections)) {
+      for (const section of sections) {
+        assert.doesNotMatch(legal[section.title], fictional, `${locale}/${section.title}`);
+        assert.doesNotMatch(legal[section.text], fictional, `${locale}/${section.text}`);
+      }
+    }
+  }
 });
 test("production details/media validate coordinates, UUIDs, and payload shapes", () => {
   const input = { action: "propertyDetails", revision: 0, propertyId: "00000000-0000-4000-8000-000000000001", description: "Test property description", coordinates: { latitude: 13.3, longitude: 103.8 } };

@@ -5,6 +5,24 @@ import { testIdentity, testAgentPassword } from "../helpers/team-fixtures";
 import { employmentExample } from "../../lib/team/examples";
 import { chromium } from "playwright-core";
 
+async function assertProductionPdf(response: Response) {
+  assert.equal(response.status, 200);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  assert.equal(Buffer.from(bytes).subarray(0, 5).toString(), "%PDF-");
+  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const task = getDocument({ data: bytes, useSystemFonts: true });
+  const document = await task.promise;
+  try {
+    let text = "";
+    for (let index = 1; index <= document.numPages; index++) {
+      text += (await (await document.getPage(index)).getTextContent()).items
+        .flatMap((item) => "str" in item ? [item.str] : []).join(" ");
+    }
+    assert.doesNotMatch(text, /\bDRAFT\b|BROUILLON|UNSIGNED|DO NOT SIGN|NOT LEGALLY VALIDATED/);
+    assert.match(text, /Signatures/);
+    assert.match(text, /____________________________/);
+  } finally { await task.destroy(); }
+}
 test("production business: PostgreSQL CRUD, documents, 20-photo limit, publication, hiring, own-agent isolation, calendar and PDF", { skip: !enabled, timeout: 180000 }, async () => {
   const cookie = await adminCookie();
   let state = await command(cookie, { action: "createClient", input: { name: "VALIDATION OWNER", role: "OWNER",
@@ -52,8 +70,7 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
     startDate: today, endDate: "2027-11-01", exclusive: false, lines: [{ propertyId, price: "100000", expectedCommission: "1000" }],
     deposit: "0", rentDueDay: 1, permittedUse: "TEST MANDATE", terms: "VALIDATION TERMS ONLY", commissionTerms: "VALIDATION COMMISSION ONLY" } });
   const contractId = state.contracts.at(-1).id;
-  const pdf = await api(`admin/contracts/${contractId}/pdf`, undefined, cookie); assert.equal(pdf.status, 200);
-  assert.equal(Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
+  await assertProductionPdf(await api(`admin/contracts/${contractId}/pdf`, undefined, cookie));
   state = await command(cookie, { action: "closeTransaction", propertyId, contractId, closedAt: today, commission: "1000" });
   assert.equal(state.properties.at(-1).availability, "SOLD");
   const transactionId = state.transactions.at(-1).id;
@@ -84,7 +101,7 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
   const employmentPdf = await api(`team/employment/${candidate.id}`, undefined, cookie);
   assert.equal(employmentPdf.status, 200);
   assert.equal(employmentPdf.headers.get("content-type"), "application/pdf");
-  assert.equal(Buffer.from(await employmentPdf.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
+  await assertProductionPdf(employmentPdf);
   await run({ action: "activate", candidateId: candidate.id, contractId: employmentId, login: "validation.agent", temporaryPassword: testAgentPassword,
     signedOn: today, legalReviewConfirmed: true, signatureConfirmed: true });
   team = await run({ action: "assignProperty", propertyId, agentId: candidate.agentId });

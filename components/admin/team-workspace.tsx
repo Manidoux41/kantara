@@ -26,7 +26,11 @@ export function TeamWorkspace({ locale, production = false, onAccount }: {
   locale: Locale; production?: boolean; onAccount?: (role: "ADMIN" | "AGENT" | null) => void;
 }) {
   const endpoint = production ? "/api/agency/team" : "/api/demo/team";
-  const t = { ...teamMessages(locale), ...(production ? { file: agencyMessages(locale).file, fileHelp: agencyMessages(locale).fileHelp } : {}) }, crm = crmMessages(locale);
+  const agency = agencyMessages(locale);
+  const t = { ...teamMessages(locale), ...(production ? {
+    file: agency.file, fileHelp: agency.hiringFileHelp, contract: agency.employment,
+    generate: agency.generateEmployment, legalNotice: agency.contractHelp, success: agency.saved,
+  } : {}) }, crm = crmMessages(locale);
   const contact = propertyMessages(locale);
   const [view, setView] = useState<TeamView | null>(null);
   const [busy, setBusy] = useState(true);

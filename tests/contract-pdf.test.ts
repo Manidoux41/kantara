@@ -42,6 +42,20 @@ test("document rendering escapes client text instead of executing markup or fetc
   assert.ok(html.includes("&lt;script&gt;"));
   assert.equal(escapeDocumentText('<>&"\''), "&lt;&gt;&amp;&quot;&#39;");
 });
+test("production mandates and leases omit draft banners and provide actual signature fields without changing stored terms", () => {
+  for (const kind of ["SALE_MANDATE", "RENTAL_MANDATE", "LEASE"] as const) {
+    for (const language of ["fr-km", "en-km"] as const) {
+      const contract = fixture(kind, language);
+      const html = contractDocumentHtml(contract, undefined, true);
+      assert.doesNotMatch(html, /\bDRAFT\b|BROUILLON|DO NOT SIGN|NE PAS SIGNER|Demonstration data only|Données de démonstration/);
+      assert.ok(html.includes('class="signature"'));
+      assert.equal((html.match(/____________________________/g) ?? []).length, kind === "LEASE" ? 3 : 2);
+      assert.ok(html.includes(contract.terms));
+      assert.ok(html.includes(contract.ownerSnapshot.name));
+      assert.ok(html.includes("ហត្ថលេខា"));
+    }
+  }
+});
 
 const browserAvailable = Boolean(process.env.PDF_CHROMIUM_PATH) || [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/chromium",

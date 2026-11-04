@@ -32,7 +32,7 @@ export async function generateDocumentPdf(render: (khmerFontBase64: string) => s
       await page.setContent(render(font.toString("base64")), { waitUntil: "load", timeout: 15000 });
       return await page.pdf({ format: "A4", printBackground: true,
         displayHeaderFooter: true, headerTemplate: "<span></span>",
-        footerTemplate: `<div style="font-size:8px;width:100%;text-align:center;color:#666">KANTARA${production ? "" : " DEMO"} · DRAFT / BROUILLON — <span class="pageNumber"></span> / <span class="totalPages"></span></div>`,
+        footerTemplate: `<div style="font-size:8px;width:100%;text-align:center;color:#666">KANTARA${production ? "" : " DEMO · DRAFT / BROUILLON"} — <span class="pageNumber"></span> / <span class="totalPages"></span></div>`,
       });
     } finally { await browser.close(); }
   } finally { active--; }

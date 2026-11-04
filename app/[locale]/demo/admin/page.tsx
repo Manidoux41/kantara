@@ -6,10 +6,11 @@ import { AdminPreview } from "@/components/admin/admin-preview";
 import { locales } from "@/lib/i18n/routing";
 import { adminDemoRecords, getAdminDemoSummary } from "@/lib/demo/administration";
 import "@/components/admin/administration.css";
+import { agencyEnabled } from "@/lib/database-config";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/demo/admin">): Promise<Metadata> {
   const { locale } = await params;
-  if (!hasLocale(locales, locale)) notFound();
+  if (!hasLocale(locales, locale) || agencyEnabled()) notFound();
   const t = await getTranslations({ locale, namespace: "AdminPreview" });
   return {
     title: `KANTARA | ${t("title")}`,
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/demo/adm
 
 export default async function AdminDemoPage({ params }: PageProps<"/[locale]/demo/admin">) {
   const { locale } = await params;
-  if (!hasLocale(locales, locale)) notFound();
+  if (!hasLocale(locales, locale) || agencyEnabled()) notFound();
   setRequestLocale(locale);
   const formatter = new Intl.NumberFormat(locale, {
     style: "currency", currency: "USD", maximumFractionDigits: 0,

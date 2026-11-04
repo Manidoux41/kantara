@@ -48,13 +48,13 @@ dt span{display:block;font-size:9pt}dd{margin:0;white-space:pre-wrap;overflow-wr
 .draft{font-weight:bold;font-size:12pt}.signature{margin-top:30px;border-top:1px dashed #999;padding-top:10px}
 </style></head><body>
 <div class="brand">KANTARA${production ? "" : " · DEMO"}</div><h1>${e(title)}</h1><h2 lang="km">${khmerTitle}</h2>
-<div class="notice"><div class="draft">${choose("BROUILLON — NON VALIDÉ — NE PAS SIGNER", "DRAFT — NOT VALIDATED — DO NOT SIGN")}</div>
+${production ? "" : `<div class="notice"><div class="draft">${choose("BROUILLON — NON VALIDÉ — NE PAS SIGNER", "DRAFT — NOT VALIDATED — DO NOT SIGN")}</div>
 ${paragraph(choose(
   "Données de démonstration uniquement. Ce modèle n’est ni un conseil juridique ni un document prêt à signer. Le texte khmer, les pouvoirs, le titre, la fiscalité et les formalités doivent être validés par un juriste cambodgien avant toute utilisation réelle. La date de signature ci-dessous est une date prévue, pas une preuve de signature.",
   "Demonstration data only. This template is not legal advice or a ready-to-sign instrument. Khmer wording, authority, title, taxes and formalities require Cambodian legal review before real use. The signing date below is planned, not proof of signature."),
-  "ទិន្នន័យសម្រាប់ការបង្ហាញតែប៉ុណ្ណោះ។ សេចក្តីព្រាងនេះមិនមែនជាដំបូន្មានច្បាប់ ឬឯកសារត្រៀមចុះហត្ថលេខាទេ។ ត្រូវឱ្យអ្នកច្បាប់កម្ពុជាពិនិត្យអត្ថបទខ្មែរ សិទ្ធិ តម្លៃពន្ធ និងបែបបទមុនប្រើប្រាស់ពិត។ កាលបរិច្ឆេទចុះហត្ថលេខាគឺជាកាលបរិច្ឆេទគ្រោង មិនមែនភស្តុតាងនៃហត្ថលេខាទេ។")}</div>
+  "ទិន្នន័យសម្រាប់ការបង្ហាញតែប៉ុណ្ណោះ។ សេចក្តីព្រាងនេះមិនមែនជាដំបូន្មានច្បាប់ ឬឯកសារត្រៀមចុះហត្ថលេខាទេ។ ត្រូវឱ្យអ្នកច្បាប់កម្ពុជាពិនិត្យអត្ថបទខ្មែរ សិទ្ធិ តម្លៃពន្ធ និងបែបបទមុនប្រើប្រាស់ពិត។ កាលបរិច្ឆេទចុះហត្ថលេខាគឺជាកាលបរិច្ឆេទគ្រោង មិនមែនភស្តុតាងនៃហត្ថលេខាទេ។")}</div>`}
 <dl>${field(choose("Référence du document", "Document reference"), "លេខយោងឯកសារ", contract.id)}
-${field(choose("Version et création", "Version and creation"), "កំណែ និងការបង្កើត", `${contractTemplateVersion} · ${contract.createdAt}`)}
+${field(choose("Version et création", "Version and creation"), "កំណែ និងការបង្កើត", `${production ? "KANTARA-2026-11-04-v1" : contractTemplateVersion} · ${contract.createdAt}`)}
 ${field(choose("Date et lieu prévus de signature", "Planned signing date and place"), "កាលបរិច្ឆេទ និងទីកន្លែងគ្រោងចុះហត្ថលេខា", `${contract.signedAt} · ${contract.signedPlace}`)}
 ${field(choose("Début / fin", "Start / end"), "ចាប់ផ្តើម / បញ្ចប់", `${contract.startDate} / ${contract.endDate}`)}</dl>
 <h2>${choose("Propriétaire / mandant", "Owner / mandator")} · <span lang="km">ម្ចាស់ / អ្នកប្រគល់អាណត្តិ</span></h2>
@@ -98,6 +98,11 @@ ${paragraph(choose("Sources consultées le 4 novembre 2026. Références de trav
   "Sources consulted 4 November 2026. Non-consolidated working references: verify applicable Khmer texts, amendments, land law, registration, licensing, taxes and local regulation with qualified counsel. Neither clauses nor Khmer translation are certified."),
   "ប្រភពបានពិនិត្យនៅថ្ងៃទី 4 ខែវិច្ឆិកា ឆ្នាំ 2026។ ត្រូវផ្ទៀងផ្ទាត់អត្ថបទខ្មែរដែលអនុវត្ត ការកែប្រែ ច្បាប់ដីធ្លី ការចុះបញ្ជី អាជ្ញាបណ្ណ ពន្ធ និងបទប្បញ្ញត្តិមូលដ្ឋានជាមួយអ្នកច្បាប់។ លក្ខខណ្ឌ និងការបកប្រែខ្មែរមិនត្រូវបានបញ្ជាក់ទទួលស្គាល់ទេ។")}
 <ol>${contractLegalSources.map((source) => `<li>${e(source.title)}<br><a href="${source.url}">${source.url}</a></li>`).join("")}</ol>
-<div class="signature">${choose("Emplacements indicatifs : propriétaire / agence / locataire le cas échéant. BROUILLON NON SIGNABLE.", "Indicative placeholders: owner / agency / tenant where applicable. DRAFT NOT FOR SIGNING.")}<p lang="km">កន្លែងសម្គាល់សម្រាប់ម្ចាស់ ភ្នាក់ងារ និងអ្នកជួលបើមាន។ សេចក្តីព្រាង មិនត្រូវចុះហត្ថលេខា។</p></div></section>
+<div class="signature">${production ? `<h2>${choose("Signatures", "Signatures")} · <span lang="km">ហត្ថលេខា</span></h2><dl>
+${field(choose("Propriétaire / mandant", "Owner / mandator"), "ម្ចាស់ / អ្នកប្រគល់អាណត្តិ", owner.name)}
+${field(choose("Signature / date / lieu", "Signature / date / place"), "ហត្ថលេខា / កាលបរិច្ឆេទ / ទីកន្លែង", "\n\n____________________________")}
+${field(choose("Agence / mandataire", "Agency / mandatary"), "ភ្នាក់ងារ / អ្នកទទួលអាណត្តិ", contract.agencyName)}
+${field(choose("Signature / date / lieu", "Signature / date / place"), "ហត្ថលេខា / កាលបរិច្ឆេទ / ទីកន្លែង", "\n\n____________________________")}
+${tenant ? field(choose("Locataire", "Tenant"), "អ្នកជួល", tenant.name) + field(choose("Signature / date / lieu", "Signature / date / place"), "ហត្ថលេខា / កាលបរិច្ឆេទ / ទីកន្លែង", "\n\n____________________________") : ""}</dl>` : choose("Emplacements indicatifs : propriétaire / agence / locataire le cas échéant. BROUILLON NON SIGNABLE.", "Indicative placeholders: owner / agency / tenant where applicable. DRAFT NOT FOR SIGNING.") + '<p lang="km">កន្លែងសម្គាល់សម្រាប់ម្ចាស់ ភ្នាក់ងារ និងអ្នកជួលបើមាន។ សេចក្តីព្រាង មិនត្រូវចុះហត្ថលេខា។</p>'}</div></section>
 </body></html>`;
 }

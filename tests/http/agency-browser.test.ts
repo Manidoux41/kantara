@@ -4,6 +4,7 @@ import { chromium } from "playwright-core";
 import { baseUrl, enabled } from "../helpers/agency-http";
 import { testIdentity } from "../helpers/team-fixtures";
 import { employmentExample } from "../../lib/team/examples";
+import { locales } from "../../lib/i18n/routing";
 test("browser production: real login, dashboard, persisted client, empty real catalogue, logout and no demo login", { skip: !enabled, timeout: 120000 }, async () => {
   const browser = await chromium.launch({ executablePath: process.env.PDF_CHROMIUM_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
   try {
@@ -29,6 +30,7 @@ test("browser production: real login, dashboard, persisted client, empty real ca
     await page.locator('input[name="password"]').fill(process.env.ADMIN_PASSWORD!);
     await page.getByRole("button", { name: "Se connecter", exact: true }).click();
     await page.locator(".business-tabs").waitFor();
+    assert.doesNotMatch(await page.locator("body").innerText(), /\bficti\w*|\bdemo\b|démonstration|brouillon/iu);
     assert.equal(await page.locator(".business-tabs").evaluate((element) => getComputedStyle(element).display), "flex");
     const kpiDisplays = await page.locator(".business-kpis").evaluateAll((elements) =>
       elements.map((element) => getComputedStyle(element).display));
@@ -61,11 +63,11 @@ test("browser production: real login, dashboard, persisted client, empty real ca
       return image?.complete && image.naturalWidth > 0;
     });
     await dossier.getByRole("button", { name: "Valider la pièce", exact: true }).click();
-    await dossier.locator("summary").filter({ hasText: "Brouillon de CDI" }).click();
+    await dossier.locator("summary").filter({ hasText: "Contrat de travail" }).click();
     for (const [key, value] of Object.entries(employmentExample)) {
       await dossier.locator(`.team-contract-form [name="${key}"]`).fill(String(value));
     }
-    await dossier.getByRole("button", { name: "Générer le brouillon de CDI", exact: true }).click();
+    await dossier.getByRole("button", { name: "Générer le contrat de travail", exact: true }).click();
     const pdfLink = dossier.getByRole("link", { name: "Télécharger · EN–KM PDF", exact: true });
     const downloaded = page.waitForEvent("download");
     await pdfLink.click();
@@ -91,11 +93,21 @@ test("browser production: real login, dashboard, persisted client, empty real ca
     await page.getByRole("button", { name: "Se déconnecter", exact: true }).click();
     await page.getByRole("button", { name: "Se connecter", exact: true }).waitFor();
     assert.equal(await page.locator(".business-tabs").count(), 0);
-    await page.goto(`${baseUrl}/fr`);
-    await page.locator("#catalogue-heading").waitFor();
-    assert.equal(await page.locator(".property-card").count(), 0);
-    assert.equal(await page.locator(".preview-banner").count(), 0);
-    assert.equal(await page.locator('a[href="/fr/admin"]').count(), 1);
+    for (const locale of locales) {
+      await page.goto(`${baseUrl}/${locale}`);
+      await page.locator("#catalogue-heading").waitFor();
+      assert.equal(await page.locator(".property-card").count(), 0);
+      assert.equal(await page.locator(".preview-banner").count(), 0);
+      assert.equal(await page.locator(`a[href="/${locale}/admin"]`).count(), 1);
+      assert.doesNotMatch(await page.locator("body").innerText(), /\bficti\w*|\bdemo\b|démonstration|prototype|brouillon|虚构|演示|架空|デモ/iu);
+    }
+    for (const topic of ["legal", "privacy", "terms", "fees", "cambodia"]) {
+      await page.goto(`${baseUrl}/fr/information/${topic}`);
+      assert.doesNotMatch(await page.locator("body").innerText(), /\bficti\w*|\bdemo\b|démonstration|prototype|brouillon/iu);
+    }
+    for (const path of ["/fr/demo/admin", "/fr/demo/team", "/fr/properties/DEMO-001"]) {
+      assert.equal((await page.request.get(`${baseUrl}${path}`)).status(), 404);
+    }
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 });

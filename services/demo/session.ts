@@ -6,6 +6,7 @@ import type { BusinessState } from "@/lib/demo/business-types";
 import { createBusinessState, getRevenueSummary } from "./business";
 import { getCrmSummary } from "./crm";
 import { recoverMemoryWorkspace, workspaceRepository } from "./repository";
+import { agencyEnabled } from "@/lib/database-config";
 
 const cookieName = "kantara-demo-workspace";
 const workspaceCookie = (id: string) => `${cookieName}=${id}; HttpOnly; SameSite=Strict; Path=/api/demo; Max-Age=2592000`;
@@ -28,7 +29,7 @@ export async function readDemoCatalogue(request: Request) {
 
 export function guardDemoRequest(request: Request, environment = process.env.NODE_ENV) {
   const url = new URL(request.url);
-  if (environment !== "development" || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
+  if (agencyEnabled() || environment !== "development" || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
     throw new ApiError(404, "NOT_FOUND", "This demo API is available only in local development.");
   }
   const origin = request.headers.get("origin");

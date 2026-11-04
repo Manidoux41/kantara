@@ -52,13 +52,13 @@ export async function executeTeamCommand(state: TeamState, account: TeamAccount,
   const command = teamCommand.parse(raw);
   if (command.action !== "advanceLead") requireAdmin(account);
   if (command.revision !== state.revision) conflict("The team workspace changed. Refresh and retry.");
-  if (state.audit.length >= 2000) conflict("Demo audit capacity reached.");
+  if (state.audit.length >= 2000) conflict("Audit capacity reached.");
   const stamp = now.toISOString();
   let targetId: string = account.id;
   if ("candidateId" in command) {
     const candidate = state.candidates.find((item) => item.id === command.candidateId) ?? notFound();
     targetId = candidate.id;
-    if (candidate.activation) conflict("An activated employee's hiring dossier is immutable in this demo.");
+    if (candidate.activation) conflict("An activated employee's hiring dossier is immutable.");
     if (command.action === "upload") {
       await validateDocument(command.input);
       const previous = candidate.documents.find((item) => item.kind === command.input.kind);
@@ -78,10 +78,10 @@ export async function executeTeamCommand(state: TeamState, account: TeamAccount,
           input: command.input, employee: { name: candidate.name, address: candidate.address, identityReference: candidate.identityReference },
           documentIds: candidate.documents.map((item) => item.id) };
       } else {
-        if (!candidate.contract || candidate.contract.id !== command.contractId) conflict("Generate and review the current employment draft first.");
+        if (!candidate.contract || candidate.contract.id !== command.contractId) conflict("Generate and review the current employment agreement first.");
         if (command.signedOn > stamp.slice(0, 10)) conflict("A recorded signature cannot be in the future.");
         if (state.accounts.some((item) => item.login === command.login)) conflict("This unique login is already registered.");
-        if (state.accounts.length >= 25) conflict("Demo account capacity reached.");
+        if (state.accounts.length >= 25) conflict("Account capacity reached.");
         const id = randomUUID();
         state.accounts.push({ id, agentId: candidate.agentId, name: candidate.name, login: command.login,
           passwordHash: await hashPassword(command.temporaryPassword), role: "AGENT", active: true, mustChangePassword: true });
@@ -90,7 +90,7 @@ export async function executeTeamCommand(state: TeamState, account: TeamAccount,
       }
     }
   } else if (command.action === "candidate") {
-    if (state.candidates.length >= 24) conflict("Demo candidate capacity reached.");
+    if (state.candidates.length >= 24) conflict("Candidate capacity reached.");
     targetId = randomUUID();
     state.candidates.push({ ...command.input, id: targetId, agentId: randomUUID(), documents: [],
       contract: null, activation: null, createdAt: stamp, createdBy: account.id });
@@ -117,7 +117,7 @@ export async function executeTeamCommand(state: TeamState, account: TeamAccount,
       state.propertyAssignments[command.propertyId] = command.agentId;
     } else {
       if (state.propertyAssignments[command.propertyId] !== command.agentId) conflict("Assign the property to this agent first.");
-      if (state.work.length >= 100) conflict("Demo work capacity reached.");
+      if (state.work.length >= 100) conflict("Work capacity reached.");
       const date = new Date(now.getTime() + 2 * 86400000);
       date.setUTCHours(3, 0, 0, 0);
       state.work.push({ id: randomUUID(), agentId: command.agentId, propertyId: command.propertyId,

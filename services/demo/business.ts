@@ -59,7 +59,7 @@ export function executeBusinessCommand(state: BusinessState, raw: BusinessComman
     || command.action === "finishAppointment") {
     applyCrmCommand(next, command, now);
   } else if (command.action === "createClient") {
-    if (next.clients.length >= 100) conflict("Demo client capacity reached.");
+    if (next.clients.length >= 100) conflict("Client capacity reached.");
     if (command.input.email && next.clients.some((item) => item.email.toLowerCase() === command.input.email.toLowerCase())) conflict("A contact already uses this email. Reuse its record instead of duplicating it.");
     if (command.input.profile?.assignedAgentId && !next.agents.some((item) => item.id === command.input.profile!.assignedAgentId && item.active)) missing();
     if (command.input.profile && !command.input.profile.categories.includes(command.input.role)) conflict("Keep the contact's primary contractual category.");
@@ -67,7 +67,7 @@ export function executeBusinessCommand(state: BusinessState, raw: BusinessComman
     if (command.input.role === "OWNER" && command.input.propertyIds.length) conflict("Create an owner's property separately; existing ownership cannot be reassigned.");
     next.clients.push({ id: randomUUID(), ...command.input });
   } else if (command.action === "createProperty") {
-    if (next.properties.length >= 100) conflict("Demo property capacity reached.");
+    if (next.properties.length >= 100) conflict("Property capacity reached.");
     const owner = client(command.input.ownerId);
     if (owner.role !== "OWNER") conflict("Property owner must have the OWNER role.");
     const id = randomUUID();
@@ -83,7 +83,7 @@ export function executeBusinessCommand(state: BusinessState, raw: BusinessComman
     for (const id of command.propertyIds) property(id);
     linkedClient.propertyIds = command.propertyIds;
   } else if (command.action === "createContract") {
-    if (next.contracts.length >= 100) conflict("Demo contract capacity reached.");
+    if (next.contracts.length >= 100) conflict("Contract capacity reached.");
     const owner = client(command.input.ownerId);
     if (owner.role !== "OWNER") conflict("A contract requires a property owner.");
     const counterparty = command.input.counterpartyId ? client(command.input.counterpartyId) : undefined;
@@ -100,11 +100,11 @@ export function executeBusinessCommand(state: BusinessState, raw: BusinessComman
       if ((command.input.kind === "SALE_MANDATE" ? "sale" : "rent") !== item.transaction) conflict("Property transaction type does not match the contract.");
       if (command.input.kind !== "LEASE" && next.contracts.some((contract) =>
         contract.kind !== "LEASE" && contract.lines.some((line) => line.propertyId === item.id))) {
-        conflict("This demo allows one agency mandate per property to avoid duplicate forecasts.");
+        conflict("Only one agency mandate per property is allowed to avoid duplicate forecasts.");
       }
       if (command.input.kind === "LEASE" && next.contracts.some((contract) =>
         contract.kind === "LEASE" && contract.lines.some((line) => line.propertyId === item.id))) {
-        conflict("This demo allows one lease per property.");
+        conflict("Only one lease per property is allowed.");
       }
       if (command.input.kind === "LEASE" && next.contracts.some((contract) =>
         contract.kind === "RENTAL_MANDATE" && contract.lines.some((line) => line.propertyId === item.id))
@@ -144,7 +144,7 @@ export function executeBusinessCommand(state: BusinessState, raw: BusinessComman
     const transaction = next.transactions.find((item) => item.id === command.transactionId) ?? missing();
     noFuture(command.paidAt);
     if (command.paidAt < transaction.closedAt) conflict("Receipt cannot precede the transaction.");
-    if (transaction.receipts.length >= 100) conflict("Demo receipt capacity reached.");
+    if (transaction.receipts.length >= 100) conflict("Receipt capacity reached.");
     if (transaction.receipts.some((receipt) => receipt.reference === command.reference)) conflict("This receipt reference was already recorded.");
     const received = transaction.receipts.reduce((sum, item) => sum + cents(item.amount), BigInt(0));
     if (received + cents(command.amount) > cents(transaction.commission)) conflict("Receipts cannot exceed the realized commission.");

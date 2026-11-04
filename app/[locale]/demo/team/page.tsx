@@ -9,15 +9,16 @@ import { LanguageSelector } from "@/components/public/language-selector";
 import { teamMessages } from "@/lib/i18n/team";
 import { locales } from "@/lib/i18n/routing";
 import "@/components/admin/team.css";
+import { agencyEnabled } from "@/lib/database-config";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/demo/team">): Promise<Metadata> {
   const { locale } = await params;
-  if (!hasLocale(locales, locale)) notFound();
+  if (!hasLocale(locales, locale) || agencyEnabled()) notFound();
   return { title: `KANTARA | ${teamMessages(locale).entry}`, robots: { index: false, follow: false }, alternates: { canonical: `/${locale}/demo/team`, languages: {} } };
 }
 export default async function TeamPage({ params }: PageProps<"/[locale]/demo/team">) {
   const { locale } = await params;
-  if (!hasLocale(locales, locale)) notFound();
+  if (!hasLocale(locales, locale) || agencyEnabled()) notFound();
   setRequestLocale(locale);
   const t = teamMessages(locale);
   return <>

@@ -15,6 +15,17 @@ test("employment draft snapshots both languages, indefinite duration and user-en
   assert.ok(!html.includes("<script>") && html.includes("&lt;script&gt;"));
   assert.ok(!html.includes("data:image"));
 });
+test("production employment agreement has bilingual signature fields without the draft banner or certification claims", async () => {
+  const state = await initialTeam(), { candidate } = await onboard(state);
+  const html = employmentDocumentHtml(candidate.contract!, "", true);
+  assert.doesNotMatch(html, /\bDRAFT\b|UNSIGNED|NOT LEGALLY VALIDATED|DO NOT SIGN|administrative drafting aid|សេចក្តីព្រាង/);
+  assert.ok(html.includes("Signatures"));
+  assert.ok(html.includes("ហត្ថលេខា"));
+  assert.equal((html.match(/____________________________/g) ?? []).length, 2);
+  assert.ok(html.includes(candidate.name));
+  assert.ok(html.includes(candidate.contract!.input.dutiesKhmer));
+  assert.ok(html.includes("No statutory right is waived."));
+});
 
 const available = Boolean(process.env.PDF_CHROMIUM_PATH) || existsSync("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome") || existsSync("/usr/bin/chromium");
 test("actual employment PDF contains English terms, substantial Khmer glyphs and no missing glyph outlines", {

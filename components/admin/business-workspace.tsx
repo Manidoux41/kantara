@@ -91,7 +91,7 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
       }
       if (!response.headers.get("content-type")?.startsWith("application/pdf")) throw new Error(t("requestFailed"));
       const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement("a"); link.href = url; link.download = `kantara-draft-${id}.pdf`;
+      const link = document.createElement("a"); link.href = url; link.download = `kantara-${production ? "contract" : "draft"}-${id}.pdf`;
       document.body.append(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
       setNotice(t("pdfReady"));

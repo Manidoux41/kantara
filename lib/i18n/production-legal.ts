@@ -1,6 +1,36 @@
 import { locales, type Locale } from "./routing";
 type Row = readonly [string, string, string, string, string, string, string];
 const rows = {
+  publisherText: [
+    "KANTARA provides real estate services in Cambodia. The publisher must provide its legal entity, registered address, registration, tax identifier and professional contact details. No licence or professional membership is asserted without supporting information.",
+    "KANTARA propose des services immobiliers au Cambodge. L’éditeur doit renseigner sa raison sociale, son siège, son immatriculation, son identifiant fiscal et ses coordonnées professionnelles. Aucune licence ou affiliation n’est affirmée sans justificatif.",
+    "KANTARA ផ្តល់សេវាអចលនទ្រព្យនៅកម្ពុជា។ អ្នកបោះពុម្ពត្រូវផ្តល់ព័ត៌មាននីតិបុគ្គល អាសយដ្ឋាន ចុះបញ្ជី លេខពន្ធ និងទំនាក់ទំនងវិជ្ជាជីវៈ។ មិនអះអាងអាជ្ញាបណ្ណដោយគ្មានភស្តុតាងទេ។",
+    "KANTARA 提供柬埔寨房地产服务。发布者须提供法人、注册地址、登记号、税号及业务联系方式。未经证明不声称持有执照或专业会员资格。",
+    "KANTARAはカンボジアの不動産サービスを提供します。運営者は法人・所在地・登録・税務番号・業務連絡先を明示する必要があります。根拠のない免許・所属の表明は行いません。",
+    "KANTARA bietet Immobiliendienstleistungen in Kambodscha. Der Herausgeber muss Rechtsträger, Sitz, Registrierung, Steuernummer und Geschäftskontakt angeben. Lizenzen oder Mitgliedschaften werden ohne Nachweis nicht behauptet.",
+    "KANTARA ofrece servicios inmobiliarios en Camboya. El editor debe indicar entidad legal, domicilio, registro, identificación fiscal y contacto profesional. No se afirman licencias ni afiliaciones sin respaldo.",
+  ],
+  data: ["Agency data", "Données de l’agence", "ទិន្នន័យភ្នាក់ងារ", "中介数据", "事業データ", "Agenturdaten", "Datos de la agencia"],
+  teamPrivacy: ["Account security and retention", "Sécurité et conservation des comptes", "សុវត្ថិភាពគណនី", "账户安全与保留", "アカウントの安全と保存", "Kontosicherheit und Speicherung", "Seguridad y conservación de cuentas"],
+  demo: ["Scope of services", "Périmètre des services", "វិសាលភាពសេវា", "服务范围", "サービスの範囲", "Leistungsumfang", "Alcance de los servicios"],
+  feePolicyText: [
+    "Fees must be agreed in writing: payer, amount or calculation, taxes, due event, cancellation/refund terms and receipts. No automatic statutory commission rate is asserted. Verify bank details independently before payment.",
+    "Les honoraires sont à convenir par écrit : débiteur, montant ou calcul, taxes, exigibilité, annulation/remboursement et reçus. Aucun taux légal automatique de commission n’est affirmé. Vérifiez les coordonnées bancaires indépendamment avant paiement.",
+    "កម្រៃត្រូវព្រមព្រៀងជាលាយលក្ខណ៍អក្សរ៖ អ្នកបង់ ចំនួន ឬវិធីគណនា ពន្ធ ពេលបង់ ការលុបចោល ការសង និងបង្កាន់ដៃ។ មិនអះអាងអត្រាកម្រៃច្បាប់ស្វ័យប្រវត្តិទេ។ ផ្ទៀងផ្ទាត់គណនីធនាគារមុនបង់។",
+    "费用须书面约定付款人、金额或计算方式、税费、到期条件、取消退款及收据。不声称存在自动适用的法定佣金率。付款前请独立核实银行信息。",
+    "支払者・金額または計算方法・税・支払条件・取消返金・領収書を書面で合意してください。自動的な法定手数料率は表明しません。送金前に銀行情報を別途確認してください。",
+    "Honorare schriftlich vereinbaren: Zahlungspflichtiger, Betrag oder Berechnung, Steuern, Fälligkeit, Storno/Erstattung und Belege. Kein automatischer gesetzlicher Provisionssatz wird behauptet. Bankdaten vor Zahlung unabhängig prüfen.",
+    "Pactar honorarios por escrito: pagador, importe o cálculo, impuestos, vencimiento, cancelación/reembolso y recibos. No se afirma una comisión legal automática. Verificar los datos bancarios independientemente antes de pagar.",
+  ],
+  documentsText: [
+    "Bilingual contracts reproduce the information entered by the agency and provide signature fields. Generating a PDF does not sign it or certify its legal validity. Applicable clauses, language consistency and formalities must be checked before signature. No automatic translation or electronic signature is provided.",
+    "Les contrats bilingues reprennent les informations saisies par l’agence et comportent des emplacements de signature. Générer un PDF ne le signe pas et ne certifie pas sa validité juridique. Clauses applicables, cohérence linguistique et formalités sont à vérifier avant signature. Aucune traduction automatique ni signature électronique n’est fournie.",
+    "កិច្ចសន្យាពីរភាសាបង្ហាញព័ត៌មានដែលបានបញ្ចូល និងមានកន្លែងចុះហត្ថលេខា។ ការបង្កើត PDF មិនចុះហត្ថលេខា ឬបញ្ជាក់សុពលភាពច្បាប់ទេ។ ត្រូវពិនិត្យលក្ខខណ្ឌ ភាសា និងបែបបទមុនចុះហត្ថលេខា។ គ្មានបកប្រែស្វ័យប្រវត្តិ ឬហត្ថលេខាអេឡិចត្រូនិកទេ។",
+    "双语合同使用中介录入的信息并提供签名栏。生成 PDF 不会签署文件或认证法律效力。签署前须核对条款、语言和手续。不提供自动翻译或电子签名。",
+    "二言語契約は入力情報と署名欄を含みます。PDF生成のみでは署名や法的有効性の認証は行われません。署名前に条項・言語・手続を確認してください。自動翻訳・電子署名は提供しません。",
+    "Zweisprachige Verträge enthalten Agenturangaben und Unterschriftsfelder. PDF-Erstellung unterzeichnet oder beglaubigt sie nicht. Klauseln, Sprachfassungen und Formalitäten vor Unterzeichnung prüfen. Keine automatische Übersetzung oder elektronische Signatur.",
+    "Los contratos bilingües incluyen los datos introducidos y espacios de firma. Generar un PDF no firma ni certifica su validez jurídica. Revisar cláusulas, idiomas y formalidades antes de firmar. Sin traducción automática ni firma electrónica.",
+  ],
   notice: [
     "Agency data is stored in PostgreSQL. Legal entity details, retention periods and policies must be completed and reviewed by a Cambodian professional before commercial use. This is not legal advice.",
     "Les données de l’agence sont conservées dans PostgreSQL. L’identité légale, les durées de conservation et les politiques restent à compléter et à valider par un professionnel cambodgien avant exploitation commerciale. Ceci ne constitue pas un conseil juridique.",
