@@ -1,4 +1,4 @@
-.admin-demo {
+.admin-demo, .agency-page {
   --admin-muted: var(--muted);
   --admin-line: var(--border);
   --admin-surface: var(--surface);

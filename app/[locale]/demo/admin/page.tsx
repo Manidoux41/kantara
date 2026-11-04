@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { AdminPreview } from "@/components/admin/admin-preview";
 import { locales } from "@/lib/i18n/routing";
 import { adminDemoRecords, getAdminDemoSummary } from "@/lib/demo/administration";
-import "./preview.css";
+import "@/components/admin/administration.css";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/demo/admin">): Promise<Metadata> {
   const { locale } = await params;

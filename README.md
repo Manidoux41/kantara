@@ -32,6 +32,8 @@ it never imports the fictional catalogue or demo accounts.
    properties, contracts, receipts, appointments and agents. Agents can read
    their explicitly assigned properties, CRM contacts/appointments and inquiries.
    The interface, API and catalogue have no fictional fallback in this mode.
+   Production and demonstration pages share the administration and team
+   stylesheets in `components/admin`, including responsive forms and CRM views.
 4. On Vercel use Node.js **24 or newer**, `npm run build`, and the usual Next.js
    deployment. `postinstall` generates Prisma Client; deploy database migrations
    as a controlled release step before the build. Do not run bootstrap on every

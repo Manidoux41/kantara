@@ -8,6 +8,18 @@ test("browser production: real login, dashboard, persisted client, empty real ca
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors: string[] = []; page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`${baseUrl}/fr/admin`);
+    const login = page.locator(".team-login");
+    await login.waitFor();
+    assert.deepEqual(await login.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { display: style.display, border: style.borderTopWidth, maxWidth: style.maxWidth };
+    }), { display: "grid", border: "1px", maxWidth: "680px" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await login.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.left >= 0 && rect.right <= document.documentElement.clientWidth;
+    }), "The styled login form must fit a mobile viewport");
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.locator('input[name="login"]').fill(process.env.ADMIN_EMAIL!);
     await page.locator('input[name="password"]').fill("Intentionally-wrong-validation-password");
     await page.getByRole("button", { name: "Se connecter", exact: true }).click();
@@ -15,6 +27,10 @@ test("browser production: real login, dashboard, persisted client, empty real ca
     await page.locator('input[name="password"]').fill(process.env.ADMIN_PASSWORD!);
     await page.getByRole("button", { name: "Se connecter", exact: true }).click();
     await page.locator(".business-tabs").waitFor();
+    assert.equal(await page.locator(".business-tabs").evaluate((element) => getComputedStyle(element).display), "flex");
+    const kpiDisplays = await page.locator(".business-kpis").evaluateAll((elements) =>
+      elements.map((element) => getComputedStyle(element).display));
+    assert.ok(kpiDisplays.length > 0 && kpiDisplays.every((display) => display === "grid"));
     await page.locator(".business-tabs").getByRole("button", { name: "Clients", exact: true }).click();
     const form = page.locator(".business-form").filter({ has: page.getByRole("heading", { name: "Nouveau client", exact: true }) });
     await form.locator('[name="name"]').fill("BROWSER VALIDATION CLIENT");

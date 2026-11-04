@@ -8,7 +8,7 @@ import { TeamWorkspace } from "@/components/admin/team-workspace";
 import { LanguageSelector } from "@/components/public/language-selector";
 import { teamMessages } from "@/lib/i18n/team";
 import { locales } from "@/lib/i18n/routing";
-import "./team.css";
+import "@/components/admin/team.css";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/demo/team">): Promise<Metadata> {
   const { locale } = await params;
