@@ -8,6 +8,9 @@ import { propertyPath } from "@/lib/properties/presentation";
 import { teamRepository } from "@/services/team/repository";
 import { cambodiaDate } from "@/lib/demo/calendar";
 import { readDemoCatalogue, guardDemoRequest } from "@/services/demo/session";
+import { agencyEnabled } from "@/lib/database-config";
+import { agencyTransaction } from "@/services/agency/repository";
+import type { TeamState } from "@/lib/team/schema";
 
 const configSchema = z.object({
   key: z.string().min(1), from: z.email(), fallback: z.email(),
@@ -47,6 +50,15 @@ function localTeam(request: Request) {
     && Boolean(process.env.DEMO_ADMIN_LOGIN && process.env.DEMO_ADMIN_PASSWORD);
 }
 export async function inquiryRecipient(request: Request, propertyId: string, config: InquiryConfig | null) {
+  if (agencyEnabled() && new URL(request.url).pathname !== "/api/demo/inquiries") {
+    return agencyTransaction(({ business, team }) => {
+      const property = business.properties.find((item) => item.id === propertyId && item.publication === "PUBLISHED");
+      if (!property) throw new ApiError(404, "NOT_FOUND", "Published property not found.");
+      const agent = team.accounts.find((item) => item.role === "AGENT" && item.active && item.agentId === team.propertyAssignments[propertyId]);
+      return { agentId: agent?.agentId ?? null, name: agent?.name ?? null, available: property.availability === "AVAILABLE",
+        email: agent?.notificationEmail ?? config?.recipients[propertyId] ?? config?.fallback ?? null };
+    });
+  }
   let property: Pick<DemoProperty, "availability"> | undefined = demoProperties.find((item) => item.id === propertyId);
   if (new URL(request.url).pathname === "/api/demo/inquiries") {
     const workspace = await readDemoCatalogue(request);
@@ -82,7 +94,7 @@ export async function verifyInquiry(input: InquiryInput, config: InquiryConfig, 
 }
 export async function deliverInquiry(input: InquiryInput, recipient: string, config: InquiryConfig, fetcher: typeof fetch = fetch) {
   const text = [
-    "KANTARA — FICTIONAL PROPERTY / BIEN FICTIF",
+    agencyEnabled() ? "KANTARA — PROPERTY INQUIRY / DEMANDE IMMOBILIERE" : "KANTARA — FICTIONAL PROPERTY / BIEN FICTIF",
     `Reference: ${input.propertyId}`, `Request: ${input.purpose}`, `Language: ${input.locale}`,
     `Name: ${input.name}`, `Email: ${input.email}`, `Phone: ${input.phone || "—"}`,
     `Preferred date (Cambodia, not confirmed): ${input.preferredDate || "—"}`,
@@ -117,8 +129,12 @@ export async function submitInquiry(request: Request, raw: unknown) {
   const hash = createHash("sha256").update(JSON.stringify(content)).digest("hex");
   let record: InquiryRecord = { ...content, id: input.requestId, agentId: recipient.agentId,
     recipient: recipient.email, payloadHash: hash, delivery: "PENDING", providerId: null, createdAt: new Date().toISOString() };
-  const persist = localTeam(request);
-  if (persist) record = await teamRepository().transact((state) => {
+  const live = agencyEnabled() && new URL(request.url).pathname !== "/api/demo/inquiries";
+  const persist = live || localTeam(request);
+  const transact = <T>(operation: (state: TeamState) => T) => live
+    ? agencyTransaction(({ team }) => operation(team), true)
+    : teamRepository().transact(operation);
+  if (persist) record = await transact((state) => {
     const previous = state.inquiries.find((item) => item.id === input.requestId);
     if (previous) {
       if (previous.payloadHash !== hash) throw new ApiError(409, "INQUIRY_CONFLICT", "Use a new request reference when editing a submitted inquiry.");
@@ -127,7 +143,7 @@ export async function submitInquiry(request: Request, raw: unknown) {
       }
       return previous;
     }
-    if (state.inquiries.length >= 200) throw new ApiError(503, "INQUIRY_CAPACITY", "The local contact queue is full.");
+    if (state.inquiries.length >= 200) throw new ApiError(503, "INQUIRY_CAPACITY", "The contact queue is full.");
     if (state.inquiries.filter((item) => item.email.toLowerCase() === input.email.toLowerCase()
       && Date.now() - new Date(item.createdAt).getTime() < 15 * 60000).length >= 3) {
       throw new ApiError(429, "INQUIRY_THROTTLED", "Please wait before submitting another contact request.");
@@ -138,7 +154,7 @@ export async function submitInquiry(request: Request, raw: unknown) {
   if (record.delivery === "ACCEPTED") return { id: input.requestId, delivery: "ACCEPTED" as const };
   // Provider idempotency covers an accepted email whose local save or HTTP response failed.
   const providerId = await deliverInquiry(input, record.recipient, config);
-  if (persist) await teamRepository().transact((state) => {
+  if (persist) await transact((state) => {
     const current = state.inquiries.find((item) => item.id === input.requestId);
     if (!current) throw new ApiError(503, "INQUIRY_STORAGE", "Email accepted, but the local inquiry record could not be found.");
     current.delivery = "ACCEPTED"; current.providerId = providerId; state.revision++;

@@ -3,6 +3,7 @@ import { inquiryRecord, publicInquiryRecord, type PublicInquiry } from "@/lib/pr
 
 const text = z.string().trim().min(1).max(200);
 export const loginId = z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9._-]{3,49}$/);
+export const accountLogin = z.union([loginId, z.email().max(254).transform((value) => value.toLowerCase())]);
 export const passwordInput = z.string().min(12).max(128);
 export const candidateInput = z.strictObject({
   name: text, address: text, identityReference: text,
@@ -41,7 +42,7 @@ export const teamCommand = z.discriminatedUnion("action", [
   z.strictObject({ action: z.literal("notificationEmail"), revision, accountId: id, email: z.union([z.email().max(254), z.literal("")]) }),
 ]);
 export const accountSchema = z.strictObject({
-  id, login: loginId, name: text, role: z.enum(["ADMIN", "AGENT"]), agentId: id.nullable(),
+  id, login: accountLogin, name: text, role: z.enum(["ADMIN", "AGENT"]), agentId: id.nullable(),
   passwordHash: z.string().regex(/^[a-f0-9]{32}:[a-f0-9]{128}$/),
   active: z.boolean(), mustChangePassword: z.boolean(),
   notificationEmail: z.email().max(254).optional(),

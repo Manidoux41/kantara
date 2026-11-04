@@ -9,7 +9,8 @@ export function GET() {
       <div style={{ display: "flex", width: 140, height: 140, padding: 18, borderRadius: 70, background: "#fff3c9", color: "#215e87" }}><BrandMark /></div>
       <div style={{ display: "flex", fontSize: 84, letterSpacing: 14, marginTop: 26 }}>KANTARA</div>
       <div style={{ display: "flex", fontSize: 28, marginTop: 26 }}>PROPERTY SERVICES · CAMBODIA</div>
-      <div style={{ display: "flex", fontSize: 18, color: "#4b6173", marginTop: 36 }}>DEMONSTRATION · FICTIONAL LISTINGS</div>
+      <div style={{ display: "flex", fontSize: 18, color: "#4b6173", marginTop: 36 }}>{agencyEnabled() ? "CAMBODIA · REAL ESTATE SERVICES" : "DEMONSTRATION · FICTIONAL LISTINGS"}</div>
     </div>, size,
   );
 }
+import { agencyEnabled } from "@/lib/database-config";

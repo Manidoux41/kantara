@@ -30,16 +30,16 @@ function fold(line: string) {
   return parts.join("\r\n");
 }
 const timestamp = (value: string) => new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-export function calendarIcs(state: BusinessState): string {
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//KANTARA//Local Demo Agenda//EN", "CALSCALE:GREGORIAN", "X-WR-CALNAME:KANTARA DEMO", `X-WR-TIMEZONE:${calendarTimeZone}`];
+export function calendarIcs(state: BusinessState, production = false): string {
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//KANTARA//${production ? "Agency Agenda" : "Local Demo Agenda"}//EN`, "CALSCALE:GREGORIAN", `X-WR-CALNAME:KANTARA${production ? "" : " DEMO"}`, `X-WR-TIMEZONE:${calendarTimeZone}`];
   for (const event of state.appointments) {
     const client = state.clients.find((item) => item.id === event.clientId);
     const agent = state.agents.find((item) => item.id === event.agentId);
     const property = state.properties.find((item) => item.id === event.propertyId);
-    lines.push("BEGIN:VEVENT", `UID:${event.id}@kantara.demo`, `DTSTAMP:${timestamp(event.updatedAt)}`,
+    lines.push("BEGIN:VEVENT", `UID:${event.id}@${production ? "kantara.agency" : "kantara.demo"}`, `DTSTAMP:${timestamp(event.updatedAt)}`,
       `CREATED:${timestamp(event.createdAt)}`, `LAST-MODIFIED:${timestamp(event.updatedAt)}`, `SEQUENCE:${event.sequence}`,
       `DTSTART:${timestamp(event.startAt)}`, `DTEND:${timestamp(event.endAt)}`,
-      `STATUS:${event.status === "CANCELLED" ? "CANCELLED" : "CONFIRMED"}`, `SUMMARY:${icsText(`DEMO - ${event.title}`)}`,
+      `STATUS:${event.status === "CANCELLED" ? "CANCELLED" : "CONFIRMED"}`, `SUMMARY:${icsText(`${production ? "" : "DEMO - "}${event.title}`)}`,
       `LOCATION:${icsText(event.location)}`,
       `DESCRIPTION:${icsText([client?.name, agent?.name, property?.title, event.notes, event.feedback].filter(Boolean).join("\n"))}`,
       "END:VEVENT");

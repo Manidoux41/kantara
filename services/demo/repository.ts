@@ -13,10 +13,12 @@ import { createCrmState } from "./crm";
 
 const clientSchema = clientInput.extend({ id: z.string() });
 const propertySchema = businessPropertyInput.extend({
-  id: z.string(), price: z.number().positive(), image: z.enum(["/images/khmer-residence.svg", "/images/khmer-courtyard.svg", "/images/river-apartment.svg"]),
+  id: z.string(), price: z.number().positive(), image: z.union([z.enum(["/images/khmer-residence.svg", "/images/khmer-courtyard.svg", "/images/river-apartment.svg"]), z.string().regex(/^\/api\/v1\/media\/[a-f0-9-]{36}$/)]),
+  description: z.string().max(10000).optional(),
+  coordinates: z.strictObject({ latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) }).optional(),
   availability: z.enum(["AVAILABLE", "SOLD", "RENTED"]), publication: z.enum(["DRAFT", "PUBLISHED"]), publishedAt: z.iso.datetime().nullable(),
 });
-const stateSchema = z.strictObject({
+export const businessStateSchema = z.strictObject({
   revision: z.number().int().min(0), clients: z.array(clientSchema).max(100), properties: z.array(propertySchema).max(100),
   contracts: z.array(contractInput.safeExtend({
     id: z.string(), createdAt: z.iso.datetime(), ownerSnapshot: clientSchema, counterpartySnapshot: clientSchema.optional(), propertySnapshots: z.array(propertySchema).max(10),
@@ -36,7 +38,7 @@ const stateSchema = z.strictObject({
     appointmentId: z.string().nullable(), channel: z.enum(["SYSTEM", "NOTE", "EMAIL", "WHATSAPP", "PHONE"]), text: z.string(),
   })).max(2000),
 });
-const documentSchema = z.strictObject({ version: z.literal(1), state: stateSchema });
+const documentSchema = z.strictObject({ version: z.literal(1), state: businessStateSchema });
 export interface WorkspaceRepository {
   read(id: string): Promise<BusinessState | null>;
   create(id: string, initial?: BusinessState): Promise<BusinessState>;

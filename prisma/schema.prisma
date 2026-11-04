@@ -133,6 +133,7 @@ model Property {
   floors           Int?
   constructionYear Int?
   furnished        Boolean               @default(false)
+  agencyDetails    Json?
   ownerId          String                @db.Uuid
   owner            PropertyOwner         @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   locationId       String                @db.Uuid
@@ -143,6 +144,7 @@ model Property {
   translations     PropertyTranslation[]
   images           PropertyImage[]
   features         PropertyFeature[]
+  agencyAssets     AgencyAsset[]
   publishedAt      DateTime?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
@@ -183,4 +185,28 @@ model PropertyFeature {
   id         String     @id @default(uuid()) @db.Uuid
   key        String     @unique
   properties Property[]
+}
+
+// Versioned private agency aggregates preserve the existing CRM invariants.
+// Payloads are encrypted by the application; published Property rows are a
+// separate public projection updated in the same PostgreSQL transaction.
+model AgencyWorkspace {
+  id        String   @id
+  payload   String   @db.Text
+  revision  Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model AgencyAsset {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @db.Uuid
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  kind       String
+  name       String
+  mime       String
+  size       Int
+  payload    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([propertyId, kind])
 }

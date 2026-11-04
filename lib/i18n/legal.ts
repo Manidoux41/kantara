@@ -1,4 +1,5 @@
 import { informationTopics, locales, type Locale } from "./routing";
+import { productionLegalMessages } from "./production-legal";
 
 export { informationTopics } from "./routing";
 
@@ -60,9 +61,10 @@ const rows = {
   ownershipText: ["Article 44 of the Constitution reserves land ownership to Khmer citizens and Khmer legal entities. Do not assume a foreign purchaser can acquire land or use a nominee arrangement safely. Eligibility for a co-owned building unit or a lease requires a separate legal assessment. The constitutional translation and Civil Code resources below are reference material, not confirmation of current consolidated law or advice for a particular transaction.", "L’article 44 de la Constitution réserve la propriété foncière aux citoyens et personnes morales khmers. Ne présumez pas qu’un acquéreur étranger peut acheter un terrain ni qu’un prête-nom constitue un montage sûr. L’éligibilité à un lot de copropriété ou à un bail nécessite une analyse juridique distincte. La traduction constitutionnelle et les ressources du Code civil ci-dessous sont documentaires, sans garantie de consolidation à jour ni conseil pour une opération particulière.", "មាត្រា ៤៤ នៃរដ្ឋធម្មនុញ្ញកំណត់កម្មសិទ្ធិដីសម្រាប់ពលរដ្ឋខ្មែរ និងនីតិបុគ្គលខ្មែរ។ កុំសន្មតថាជនបរទេសអាចទិញដី ឬប្រើអ្នកឈរឈ្មោះដោយសុវត្ថិភាព។ សិទ្ធិលើចំណែកអគារសហកម្មសិទ្ធិ ឬជួលត្រូវការវិភាគច្បាប់ដាច់ដោយឡែក។ ឯកសារខាងក្រោមសម្រាប់យោង មិនបញ្ជាក់ច្បាប់បច្ចុប្បន្ន ឬផ្តល់ដំបូន្មានជាក់លាក់ទេ។", "宪法第44条将土地所有权保留给高棉公民和高棉法人。不要假定外国买家可购地或代持安排安全。共有建筑单元或租赁资格须单独法律评估。下列宪法译文及民法资源仅供参考，不保证是现行汇编法律，也非具体交易建议。", "憲法44条は土地所有権をクメール国民とクメール法人に限定しています。外国人の土地取得や名義借りの安全性を前提にしないでください。区分所有建物の住戸や賃貸の適格性は別途法的評価が必要です。以下の憲法翻訳・民法資料は参考資料であり、最新統合法令の保証や個別助言ではありません。", "Artikel 44 der Verfassung behält Grundeigentum Khmer-Bürgern und Khmer-Rechtsträgern vor. Landkauf durch Ausländer oder sichere Strohmannmodelle nicht voraussetzen. Eignung für Miteigentumseinheiten oder Miete gesondert rechtlich prüfen. Verfassungsübersetzung und Zivilgesetzbuch-Quellen sind Referenzen, keine Garantie aktuellen konsolidierten Rechts oder Einzelfallberatung.", "El artículo 44 de la Constitución reserva la propiedad de tierras a ciudadanos y entidades jurídicas jemeres. No asumir que un extranjero puede comprar terrenos ni que usar un testaferro es seguro. La elegibilidad para unidades en copropiedad o arrendamientos exige análisis jurídico específico. Las referencias no garantizan legislación consolidada vigente ni asesoran operaciones particulares."],
 } satisfies Record<string, Translation>;
 
-export function legalMessages(locale: Locale) {
+export function legalMessages(locale: Locale, production = false) {
   const index = locales.indexOf(locale);
-  return Object.fromEntries(Object.entries(rows).map(([key, values]) => [key, values[index]])) as Record<keyof typeof rows, string>;
+  const messages = Object.fromEntries(Object.entries(rows).map(([key, values]) => [key, values[index]])) as Record<keyof typeof rows, string>;
+  return production ? { ...messages, ...productionLegalMessages(locale) } : messages;
 }
 
 export const informationSections: Record<InformationTopic, readonly { title: keyof typeof rows; text: keyof typeof rows }[]> = {

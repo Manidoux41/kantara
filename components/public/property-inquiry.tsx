@@ -18,7 +18,7 @@ declare global { interface Window { turnstile?: Turnstile } }
 const statusSchema = z.object({ enabled: z.boolean(), siteKey: z.string().nullable(), agentName: z.string().nullable() });
 const envelope = z.object({ data: z.unknown().optional(), error: z.object({ code: z.string(), message: z.string() }).optional() });
 
-export function PropertyInquiry({ propertyId, locale, available }: { propertyId: string; locale: Locale; available: boolean }) {
+export function PropertyInquiry({ propertyId, locale, available, production = false }: { propertyId: string; locale: Locale; available: boolean; production?: boolean }) {
   const t = propertyMessages(locale);
   const [config, setConfig] = useState<z.infer<typeof statusSchema> | null>(null);
   const [error, setError] = useState("");
@@ -32,7 +32,7 @@ export function PropertyInquiry({ propertyId, locale, available }: { propertyId:
   const [purpose, setPurpose] = useState<"VISIT" | "INFORMATION">(available ? "VISIT" : "INFORMATION");
   const [minimumDate, setMinimumDate] = useState("");
   const widget = useRef<HTMLDivElement>(null);
-  const endpoint = process.env.NODE_ENV === "development" ? "/api/demo/inquiries" : "/api/v1/inquiries";
+  const endpoint = !production && process.env.NODE_ENV === "development" ? "/api/demo/inquiries" : "/api/v1/inquiries";
 
   useEffect(() => {
     const controller = new AbortController();

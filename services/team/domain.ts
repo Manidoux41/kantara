@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { ApiError } from "@/lib/api/errors";
-import { demoProperties } from "@/lib/demo/properties";
+import { demoProperties, type DemoProperty } from "@/lib/demo/properties";
 import { teamCommand, type TeamState, type TeamAccount, type TeamPublicAccount, type TeamView } from "@/lib/team/schema";
 import { hashPassword } from "./passwords";
 import { LocalMediaError, validateMediaBatch } from "@/lib/demo/media";
@@ -15,12 +15,13 @@ function notFound(): never { throw new ApiError(404, "NOT_FOUND", "Record not fo
 export function requireAdmin(account: TeamAccount) {
   if (account.role !== "ADMIN") throw new ApiError(403, "ADMIN_ONLY", "Only an administrator can manage hiring or accounts.");
 }
-export function teamView(state: TeamState, account: TeamAccount): TeamView {
+type AssignedProperty = Pick<DemoProperty, "id" | "location" | "price" | "transaction"> & { title?: string; key?: string };
+export function teamView(state: TeamState, account: TeamAccount, properties: readonly AssignedProperty[] = demoProperties): TeamView {
   const admin = account.role === "ADMIN";
   return {
     revision: state.revision, account: publicAccount(account),
-    properties: demoProperties.filter((item) => admin || state.propertyAssignments[item.id] === account.agentId)
-      .map((item) => ({ id: item.id, title: `KANTARA DEMO — ${item.key}`, location: item.location, price: item.price,
+    properties: properties.filter((item) => admin || state.propertyAssignments[item.id] === account.agentId)
+      .map((item) => ({ id: item.id, title: item.title ?? `KANTARA DEMO — ${item.key}`, location: item.location, price: item.price,
         transaction: item.transaction, agentId: state.propertyAssignments[item.id] ?? null })),
     work: state.work.filter((item) => admin || item.agentId === account.agentId),
     inquiries: state.inquiries.filter((item) => admin || item.agentId === account.agentId).map((item) => publicInquiryRecord.parse(item)),
@@ -47,7 +48,7 @@ export async function validateDocument(input: { mime: string; base64: string; na
   }
   return bytes;
 }
-export async function executeTeamCommand(state: TeamState, account: TeamAccount, raw: unknown, now = new Date()) {
+export async function executeTeamCommand(state: TeamState, account: TeamAccount, raw: unknown, now = new Date(), properties: readonly AssignedProperty[] = demoProperties) {
   const command = teamCommand.parse(raw);
   if (command.action !== "advanceLead") requireAdmin(account);
   if (command.revision !== state.revision) conflict("The team workspace changed. Refresh and retry.");
@@ -109,7 +110,7 @@ export async function executeTeamCommand(state: TeamState, account: TeamAccount,
     state.sessions = state.sessions.filter((session) => session.accountId !== item.id);
   } else if (command.action === "assignProperty" || command.action === "sampleWork") {
     const agent = state.accounts.find((entry) => entry.agentId === command.agentId && entry.active) ?? notFound();
-    if (!demoProperties.some((item) => item.id === command.propertyId)) notFound();
+    if (!properties.some((item) => item.id === command.propertyId)) notFound();
     targetId = command.propertyId;
     if (command.action === "assignProperty") {
       if (state.work.some((item) => item.propertyId === command.propertyId && item.agentId !== agent.agentId)) conflict("This property has linked work. Do not reassign it without migrating its work records.");

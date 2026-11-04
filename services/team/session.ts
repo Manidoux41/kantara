@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { ApiError } from "@/lib/api/errors";
-import { loginId, passwordInput, type TeamAccount, type TeamState } from "@/lib/team/schema";
+import { accountLogin, passwordInput, type TeamAccount, type TeamState } from "@/lib/team/schema";
 import { guardDemoRequest } from "@/services/demo/session";
 import { digest, hashPassword, sessionToken, verifyPassword } from "./passwords";
 
@@ -10,13 +10,13 @@ export function guardTeamRequest(request: Request) {
   guardDemoRequest(request);
   if (new URL(request.url).search) throw new ApiError(400, "VALIDATION_ERROR", "Query parameters are not supported.");
 }
-function requestDigest(request: Request) {
+function requestDigest(request: Request, cookieName = teamCookieName) {
   const token = request.headers.get("cookie")?.split(";").map((item) => item.trim())
-    .find((item) => item.startsWith(`${teamCookieName}=`))?.slice(teamCookieName.length + 1);
+    .find((item) => item.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1);
   return token && /^[A-Za-z0-9_-]{43}$/.test(token) ? digest(token) : "";
 }
-export function requireAccount(state: TeamState, request: Request, allowPasswordChange = false, now = Date.now()): TeamAccount {
-  const session = state.sessions.find((item) => item.digest === requestDigest(request) && item.expiresAt > now);
+export function requireAccount(state: TeamState, request: Request, allowPasswordChange = false, now = Date.now(), cookieName = teamCookieName): TeamAccount {
+  const session = state.sessions.find((item) => item.digest === requestDigest(request, cookieName) && item.expiresAt > now);
   const account = session && state.accounts.find((item) => item.id === session.accountId && item.active);
   if (!account) throw new ApiError(401, "LOGIN_REQUIRED", "Sign in with an active account.");
   if (account.mustChangePassword && !allowPasswordChange) throw new ApiError(403, "PASSWORD_CHANGE_REQUIRED", "Replace the temporary password before accessing your workspace.");
@@ -32,7 +32,7 @@ function issueSession(state: TeamState, account: TeamAccount, now: number) {
   state.sessions.push({ digest: digest(token), accountId: account.id, expiresAt: now + 8 * 3600000 });
   return token;
 }
-const credentials = z.strictObject({ action: z.literal("login"), login: loginId, password: z.string().min(1).max(128) });
+const credentials = z.strictObject({ action: z.literal("login"), login: accountLogin, password: z.string().min(1).max(128) });
 export async function login(state: TeamState, raw: unknown, now = Date.now()) {
   const input = credentials.parse(raw);
   state.attempts = state.attempts.filter((item) => item.until > now);
@@ -52,8 +52,8 @@ export async function login(state: TeamState, raw: unknown, now = Date.now()) {
   state.attempts = state.attempts.filter((item) => item.key !== digest(input.login));
   return { token: issueSession(state, account, now), account };
 }
-export function logout(state: TeamState, request: Request) {
-  state.sessions = state.sessions.filter((item) => item.digest !== requestDigest(request));
+export function logout(state: TeamState, request: Request, cookieName = teamCookieName) {
+  state.sessions = state.sessions.filter((item) => item.digest !== requestDigest(request, cookieName));
 }
 export async function changePassword(state: TeamState, account: TeamAccount, raw: unknown, now = Date.now()) {
   const input = z.strictObject({ action: z.literal("changePassword"), currentPassword: z.string().min(1).max(128), password: passwordInput }).parse(raw);

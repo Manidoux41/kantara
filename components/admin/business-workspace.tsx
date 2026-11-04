@@ -9,6 +9,7 @@ import { PropertyFilters } from "@/components/public/property-filters";
 import { ActivityWorkspace, CalendarWorkspace, ContactDetails, CrmDashboard, LeadWorkspace } from "./crm-workspace";
 import type { CrmSummary } from "@/lib/demo/crm-types";
 import { Icon } from "@/components/public/icon";
+import { AgencyMedia } from "./agency-media";
 
 type Snapshot = BusinessState & { revenue: RevenueSummary; crm: CrmSummary; storage: string };
 export type BusinessTab = "overview" | "clients" | "properties" | "contracts" | "finance" | "leads" | "calendar" | "activity";
@@ -27,7 +28,8 @@ async function readResponse(response: Response) {
   return body.data;
 }
 
-export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: BusinessTab }) {
+export function BusinessWorkspace({ initialTab = "overview", production = false, readOnly = false }: { initialTab?: BusinessTab; production?: boolean; readOnly?: boolean }) {
+  const endpoint = production ? "/api/agency/admin" : "/api/demo/admin";
   const t = useTranslations("Business");
   const c = useTranslations("Crm");
   const p = useTranslations("Preview");
@@ -45,17 +47,17 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/demo/admin", { cache: "no-store", signal: controller.signal }).then(readResponse).then((value) => {
+    fetch(endpoint, { cache: "no-store", signal: controller.signal }).then(readResponse).then((value) => {
       setState(value); setOwnerId(value.clients.find((client) => client.role === "OWNER")?.id ?? "");
     }).catch((failure: unknown) => {
       if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : t("requestFailed"));
     });
     return () => controller.abort();
-  }, [t]);
+  }, [t, endpoint]);
 
   async function refresh() {
     setBusy(true); setError("");
-    try { setState(await readResponse(await fetch("/api/demo/admin", { cache: "no-store" }))); }
+    try { setState(await readResponse(await fetch(endpoint, { cache: "no-store" }))); }
     catch (failure) { setError(failure instanceof Error ? failure.message : t("requestFailed")); }
     finally { setBusy(false); }
   }
@@ -63,7 +65,7 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
     if (!state || busy) return;
     setBusy(true); setError(""); setNotice("");
     try {
-      const next = await readResponse(await fetch("/api/demo/admin", {
+      const next = await readResponse(await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json", "X-Kantara-Demo": "local" },
         body: JSON.stringify({ ...payload, revision: state.revision }),
       }));
@@ -82,7 +84,7 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
   async function download(id: string) {
     setBusy(true); setError(""); setNotice("");
     try {
-      const response = await fetch(`/api/demo/admin/contracts/${id}/pdf`, { cache: "no-store" });
+      const response = await fetch(`${endpoint}/contracts/${id}/pdf`, { cache: "no-store" });
       if (!response.ok) {
         const body: Envelope = await response.json();
         throw new Error(body.error?.message ?? `HTTP ${response.status}`);
@@ -108,8 +110,18 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
       <input type="checkbox" name={name} value={property.id} />{property.title} · {property.id}
     </label>)}</div>;
 
-  return <section className="business-workspace" aria-label={t("title")} aria-busy={busy || (!state && !error)}>
-    <div className="business-notice"><strong>{t("title")}</strong><p>{c("persistence")}</p>{state?.storage === "memory" && <p>{c("memory")}</p>}</div>
+  if (readOnly) return <section className="business-workspace">
+    {error && <p role="alert">{error}</p>}
+    {state && <><h2>{c("contacts")} · {c("calendar")}</h2>
+      <a href={`${endpoint}/calendar`} className="text-link">{c("export")}</a>
+      <div className="business-list">{state.clients.map((client) => <article key={client.id}><h3>{client.name}</h3>
+        <p>{client.email} · {client.phone}</p></article>)}
+      {state.leads.map((lead) => <article key={lead.id}><h3>{state.clients.find((item) => item.id === lead.clientId)?.name}</h3><p>{lead.stage}</p></article>)}
+      {state.appointments.map((event) => <article key={event.id}><h3>{event.title}</h3><time>{event.startAt}</time><p>{event.status}</p></article>)}</div>
+    </>}
+  </section>;
+  return <section className="business-workspace" aria-label={t("navigation")} aria-busy={busy || (!state && !error)}>
+    {!production && <div className="business-notice"><strong>{t("title")}</strong><p>{c("persistence")}</p>{state?.storage === "memory" && <p>{c("memory")}</p>}</div>}
     <div className="business-tabs" role="group" aria-label={t("navigation")}>
       {(["overview", "clients", "leads", "properties", "calendar", "contracts", "finance", "activity"] as const).map((value) =>
         <button key={value} type="button" disabled={!state} aria-pressed={tab === value} onClick={() => {
@@ -117,12 +129,12 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
           setTab(value); setNotice("");
         }}>{value === "leads" || value === "calendar" || value === "activity" ? c(value) : t(value)}</button>)}
       <button type="button" disabled={busy} onClick={() => void refresh()}>{t("refresh")}</button>
-      <a className="text-button" href="/api/demo/admin/export" download="kantara-demo-workspace.json">{c("backup")}</a>
+      <a className="text-button" href={`${endpoint}/export`} download={production ? "kantara-agency.json" : "kantara-demo-workspace.json"}>{c("backup")}</a>
     </div>
     {error && <p className="tools-error" role="alert">{t("error")} {error}</p>}
     {notice && <p className="business-success" role="status">{notice}</p>}
     {(busy || (!state && !error)) && <p className="business-loading" role="status">{t("working")}</p>}
-    {!state ? error && <p>{t("localOnly")}</p> : <>
+    {!state ? !production && error && <p>{t("localOnly")}</p> : <>
       {tab === "overview" && <>
         <nav className="business-quick-actions" aria-label={ui("quickAccess")}>
           <h2>{ui("quickAccess")}</h2>
@@ -143,7 +155,7 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
         <CrmDashboard state={state} summary={state.crm} />
       </>}
       {tab === "leads" && <LeadWorkspace state={state} busy={busy} command={command} />}
-      {tab === "calendar" && <CalendarWorkspace state={state} busy={busy} command={command} />}
+      {tab === "calendar" && <CalendarWorkspace state={state} busy={busy} command={command} calendarEndpoint={`${endpoint}/calendar`} />}
       {tab === "activity" && <ActivityWorkspace state={state} />}
       {tab === "clients" && <>
         <form className="business-form" onSubmit={(event) => {
@@ -209,6 +221,7 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
         </form>
         <PropertyFilters onApply={setPropertyFilters} includePublication />
         <div className="business-list">{properties.map((property) => <article key={property.id}>
+          {production && <AgencyMedia property={property} command={command} refresh={refresh} />}
           <h3>{property.title}</h3><p>{property.id} · {clientName(property.ownerId)}</p>
           <div className="business-badges"><span>{t(property.availability)}</span><span>{t(property.publication)}</span></div>
           <p>{property.price} USD{property.transaction === "rent" ? p("perMonth") : ""} · {property.area} m² · {property.bedrooms} {t("bedrooms")} · {property.rooms} {t("rooms")}</p>
@@ -246,7 +259,7 @@ export function BusinessWorkspace({ initialTab = "overview" }: { initialTab?: Bu
             {contractKind === "LEASE" && <Field label={t("TENANT")}><select name="counterpartyId" required><option value="">{t("choose")}</option>
               {state.clients.filter((client) => client.role === "TENANT").map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
             </select></Field>}
-            <Field label={t("agencyName")}><input name="agencyName" required defaultValue="KANTARA DEMO" maxLength={200} /></Field>
+            <Field label={t("agencyName")}><input name="agencyName" required defaultValue={production ? "KANTARA" : "KANTARA DEMO"} maxLength={200} /></Field>
             <Field label={t("agencyAddress")}><input name="agencyAddress" required maxLength={200} /></Field>
             <Field label={t("agencyRegistration")}><input name="agencyRegistration" required maxLength={200} /></Field>
             <Field label={t("signedPlace")}><input name="signedPlace" required maxLength={200} /></Field>

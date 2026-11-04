@@ -8,9 +8,9 @@ import type { Locale } from "@/lib/i18n/routing";
 import { propertyPath, propertyPosition } from "@/lib/properties/presentation";
 import "leaflet/dist/leaflet.css";
 
-export type MapListing = { id: string; title: string; price: string };
+export type MapListing = { id: string; title: string; price: string; coordinates?: { latitude: number; longitude: number } };
 
-export function PropertyMap({ listings }: { listings: MapListing[] }) {
+export function PropertyMap({ listings, production = false }: { listings: MapListing[]; production?: boolean }) {
   const locale = useLocale() as Locale;
   const t = propertyMessages(locale);
   const [enabled, setEnabled] = useState(false);
@@ -34,14 +34,14 @@ export function PropertyMap({ listings }: { listings: MapListing[] }) {
       tiles.on("tileerror", () => { if (active) setError(true); });
       tiles.addTo(map);
       const located = current.flatMap((listing) => {
-        const point = propertyPosition(listing.id);
+        const point = listing.coordinates ?? (!production ? propertyPosition(listing.id) : undefined);
         return point ? [{ ...listing, coordinates: [point.latitude, point.longitude] as [number, number] }] : [];
       });
       const points = located.map((listing) => listing.coordinates);
       if (points.length) map.fitBounds(L.latLngBounds(points), { padding: [70, 60], maxZoom: 14 });
       else map.setView([12.5, 104.8], 7);
       const markers = L.layerGroup().addTo(map);
-      function propertyLink(listing: MapListing, className: string) {
+      function propertyLink(listing: Pick<MapListing, "id" | "title" | "price">, className: string) {
         const link = document.createElement("a");
         link.href = propertyPath(locale, listing.id);
         link.className = className;
@@ -94,16 +94,16 @@ export function PropertyMap({ listings }: { listings: MapListing[] }) {
       dispose = () => { observer.disconnect(); map.remove(); };
     }).catch(() => { if (active) setError(true); });
     return () => { active = false; dispose?.(); };
-  }, [enabled, serialized, locale, t.cluster]);
+  }, [enabled, serialized, locale, t.cluster, production]);
 
   return <section className="property-map-section" aria-label={t.map}>
     <h3>{t.map}</h3>
-    <p>{t.approximate}</p>
+    {!production && <p>{t.approximate}</p>}
     {!enabled ? <div className="map-consent"><p>{t.mapPrivacy}</p>
       <button type="button" className="button button-dark" onClick={() => { setError(false); setEnabled(true); }}>{t.loadMap}</button>
     </div> : <div className="property-map-canvas" ref={container} role="region" aria-label={`${t.map} · OpenStreetMap`} />}
     {error && <p className="tools-error" role="alert">{t.mapError}</p>}
-    {listings.some((item) => !propertyPosition(item.id)) && <p>{t.missing}</p>}
+    {listings.some((item) => !item.coordinates && (production || !propertyPosition(item.id))) && <p>{t.missing}</p>}
     <ul className="map-property-list">{listings.map((item) => <li key={item.id}>
       <Link href={propertyPath(locale, item.id)}>{item.title} · {item.price}</Link>
     </li>)}</ul>

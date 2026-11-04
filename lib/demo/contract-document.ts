@@ -13,7 +13,7 @@ export const contractTemplateVersion = "KANTARA-DRAFT-2026-11-04-v1";
 export function escapeDocumentText(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 }
-export function contractDocumentHtml(contract: BusinessContract, khmerFontBase64?: string): string {
+export function contractDocumentHtml(contract: BusinessContract, khmerFontBase64?: string, production = false): string {
   const fr = contract.language === "fr-km";
   const choose = (french: string, english: string) => fr ? french : english;
   const title = contract.kind === "SALE_MANDATE"
@@ -47,7 +47,7 @@ dt span{display:block;font-size:9pt}dd{margin:0;white-space:pre-wrap;overflow-wr
 .section{break-before:page}.property{break-inside:avoid;margin-bottom:20px}a{color:#173c32;overflow-wrap:anywhere}
 .draft{font-weight:bold;font-size:12pt}.signature{margin-top:30px;border-top:1px dashed #999;padding-top:10px}
 </style></head><body>
-<div class="brand">KANTARA · DEMO</div><h1>${e(title)}</h1><h2 lang="km">${khmerTitle}</h2>
+<div class="brand">KANTARA${production ? "" : " · DEMO"}</div><h1>${e(title)}</h1><h2 lang="km">${khmerTitle}</h2>
 <div class="notice"><div class="draft">${choose("BROUILLON — NON VALIDÉ — NE PAS SIGNER", "DRAFT — NOT VALIDATED — DO NOT SIGN")}</div>
 ${paragraph(choose(
   "Données de démonstration uniquement. Ce modèle n’est ni un conseil juridique ni un document prêt à signer. Le texte khmer, les pouvoirs, le titre, la fiscalité et les formalités doivent être validés par un juriste cambodgien avant toute utilisation réelle. La date de signature ci-dessous est une date prévue, pas une preuve de signature.",

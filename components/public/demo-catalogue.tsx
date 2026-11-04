@@ -15,14 +15,14 @@ import { PropertyMap } from "./property-map";
 import { propertyMessages } from "@/lib/i18n/property";
 import type { Locale } from "@/lib/i18n/routing";
 
-export function DemoCatalogue({ prices }: { prices: Record<string, string> }) {
+export function DemoCatalogue({ prices, production = false }: { prices: Record<string, string>; production?: boolean }) {
   const locale = useLocale() as Locale;
   const details = propertyMessages(locale);
   const t = useTranslations("Preview");
   const tools = useTranslations("PropertyTools");
   const b = useTranslations("Business");
   const ui = useTranslations("Interface");
-  const [catalogue, setCatalogue] = useState<readonly CatalogueProperty[]>(demoProperties);
+  const [catalogue, setCatalogue] = useState<readonly CatalogueProperty[]>(production ? [] : demoProperties);
   const [apiError, setApiError] = useState("");
   const [filters, setFilters] = useState<DemoFilters>(initialDemoFilters);
   const [filterVersion, setFilterVersion] = useState(0);
@@ -42,11 +42,11 @@ export function DemoCatalogue({ prices }: { prices: Record<string, string> }) {
   const price = (property: CatalogueProperty) => prices[property.id] ?? `${property.price.toFixed(2)} USD`;
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
+    if (!production && process.env.NODE_ENV !== "development") return;
     const controller = new AbortController();
     const load = async () => {
       try {
-        const response = await fetch("/api/demo/catalogue", { cache: "no-store", signal: controller.signal });
+        const response = await fetch(production ? "/api/v1/catalogue" : "/api/demo/catalogue", { cache: "no-store", signal: controller.signal });
         const body: { data?: CatalogueProperty[]; error?: { message: string } } = await response.json();
         if (!response.ok || !body.data) throw new Error(body.error?.message ?? `HTTP ${response.status}`);
         setCatalogue(body.data); setApiError("");
@@ -58,7 +58,7 @@ export function DemoCatalogue({ prices }: { prices: Record<string, string> }) {
     window.addEventListener("focus", load);
     window.addEventListener("kantara-demo-updated", load);
     return () => { controller.abort(); window.removeEventListener("focus", load); window.removeEventListener("kantara-demo-updated", load); };
-  }, [b]);
+  }, [b, production]);
 
   useEffect(() => {
     if (selected && !dialog.current?.open) dialog.current?.showModal();
@@ -114,13 +114,13 @@ export function DemoCatalogue({ prices }: { prices: Record<string, string> }) {
         <button className="text-button" type="button" onClick={reset}>{t("reset")}</button>
       </div>
 
-      {view === "map" && <PropertyMap listings={properties.map((property) => ({ id: property.id, title: title(property), price: price(property) }))} />}
+      {view === "map" && <PropertyMap production={production} listings={properties.map((property) => ({ id: property.id, title: title(property), price: price(property), coordinates: "coordinates" in property ? property.coordinates : undefined }))} />}
       {properties.length && view !== "map" ? (
         <div className={`property-grid${view === "list" ? " property-list-view" : ""}`}>
           {properties.map((property) => (
             <article key={property.id} className="property-card" data-transaction={property.transaction}>
               <div className="property-art">
-                <Image src={property.image} alt={title(property)} width={1200} height={1000} sizes="(max-width: 640px) 100vw, (max-width: 960px) 50vw, 33vw" />
+                <Image src={property.image} unoptimized={production} alt={title(property)} width={1200} height={1000} sizes="(max-width: 640px) 100vw, (max-width: 960px) 50vw, 33vw" />
                 <span className="listing-badge">{t(property.transaction)}</span>
                 {favoriteButton(property, "card-favorite")}
                 {property.availability && property.availability !== "AVAILABLE" && <span className="listing-availability">{b(property.availability)}</span>}
@@ -173,7 +173,7 @@ export function DemoCatalogue({ prices }: { prices: Record<string, string> }) {
             <form method="dialog" className="dialog-close-form">
               <button className="dialog-close" aria-label={t("close")}><Icon name="close" /></button>
             </form>
-            <Image className="dialog-art" src={selected.image} alt={title(selected)} width={1200} height={1000} />
+            <Image className="dialog-art" src={selected.image} unoptimized={production} alt={title(selected)} width={1200} height={1000} />
             <div className="dialog-content">
               <p className="eyebrow">{t("demoLabel")} · {selected.id}</p>
               <h2 id="property-dialog-title">{title(selected)}</h2>
@@ -191,7 +191,7 @@ export function DemoCatalogue({ prices }: { prices: Record<string, string> }) {
                 <div><dt>{tools("rooms")}</dt><dd>{selected.rooms}</dd></div>
               </dl>
               <p className="property-price">{price(selected)}{selected.transaction === "rent" && <span>{t("perMonth")}</span>}</p>
-              <p className="dialog-notice">{details.demo}</p>
+              {!production && <p className="dialog-notice">{details.demo}</p>}
               <Link className="button button-dark" href={propertyPath(locale, selected.id)}>{details.fullDetails}</Link>
             </div>
           </>

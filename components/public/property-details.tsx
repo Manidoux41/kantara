@@ -11,19 +11,19 @@ import type { CatalogueProperty } from "@/lib/properties/presentation";
 import { PropertyMap } from "./property-map";
 import { PropertyInquiry } from "./property-inquiry";
 
-export function PropertyDetails({ id, initial, initialPrice, locale }: { id: string; initial: CatalogueProperty | null; initialPrice: string; locale: Locale }) {
+export function PropertyDetails({ id, initial, initialPrice, locale, production = false }: { id: string; initial: CatalogueProperty | null; initialPrice: string; locale: Locale; production?: boolean }) {
   const t = useTranslations("Preview"), tools = useTranslations("PropertyTools"), b = useTranslations("Business");
   const copy = propertyMessages(locale);
   const [property, setProperty] = useState(initial);
   const [price, setPrice] = useState(initialPrice);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(process.env.NODE_ENV === "development");
+  const [loading, setLoading] = useState(production || process.env.NODE_ENV === "development");
   useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
+    if (!production && process.env.NODE_ENV !== "development") return;
     const controller = new AbortController();
     void (async () => {
       try {
-        const response = await fetch("/api/demo/catalogue", { cache: "no-store", signal: controller.signal });
+        const response = await fetch(production ? "/api/v1/catalogue" : "/api/demo/catalogue", { cache: "no-store", signal: controller.signal });
         const body: { data?: CatalogueProperty[] } = await response.json();
         if (!response.ok || !body.data) throw new Error(copy.error);
         const found = body.data.find((item) => item.id === id) ?? null;
@@ -34,7 +34,7 @@ export function PropertyDetails({ id, initial, initialPrice, locale }: { id: str
       } finally { if (!controller.signal.aborted) setLoading(false); }
     })();
     return () => controller.abort();
-  }, [id, locale, copy.error]);
+  }, [id, locale, copy.error, production]);
   const original = demoProperties.find((item) => item.id === id);
   const title = original ? t(`properties.${original.key}.title`) : property && "title" in property ? property.title : copy.notFound;
 
@@ -47,11 +47,16 @@ export function PropertyDetails({ id, initial, initialPrice, locale }: { id: str
         <div><p className="property-price">{price}{property.transaction === "rent" && <span>{t("perMonth")}</span>}</p>
           <p>{b(property.availability ?? "AVAILABLE")}</p><a className="button button-dark" href="#contact-agent">{copy.contact}</a></div>
       </div>
-      <p className="information-notice">{copy.demo}</p>
-      <Image className="property-detail-image" src={property.image} alt={title} width={1200} height={1000} sizes="(max-width: 760px) 100vw, 85vw" preload />
+      {!production && <p className="information-notice">{copy.demo}</p>}
+      <Image className="property-detail-image" src={property.image} unoptimized={production} alt={title} width={1200} height={1000} sizes="(max-width: 760px) 100vw, 85vw" preload />
+      {property.images && property.images.length > 1 && <div className="property-photo-gallery">
+        {property.images.slice(1).map((src, index) => <a href={src} target="_blank" rel="noreferrer" key={src}>
+          <Image src={src} unoptimized={production} alt={`${title} · ${index + 2}`} width={480} height={360} sizes="(max-width: 760px) 50vw, 25vw" />
+        </a>)}
+      </div>}
       <div className="property-detail-layout"><article>
         <h2>{copy.overview}</h2>
-        <p>{original ? t(`properties.${original.key}.description`) : "address" in property ? property.address : ""}</p>
+        <p>{original ? t(`properties.${original.key}.description`) : "description" in property ? property.description : "address" in property ? property.address : ""}</p>
         <dl className="dialog-facts">
           <div><dt>{t("bedroomsLabel")}</dt><dd>{property.bedrooms}</dd></div>
           <div><dt>{t("bathroomsLabel")}</dt><dd>{property.bathrooms}</dd></div>
@@ -60,11 +65,11 @@ export function PropertyDetails({ id, initial, initialPrice, locale }: { id: str
         </dl>
         {property.publishedAt && <p>{b("publicationDate")} : <time dateTime={property.publishedAt}>{property.publishedAt.slice(0, 10)}</time></p>}
         <h2>{copy.surroundings}</h2><p>{copy.locationHelp}</p>
-        <PropertyMap listings={[{ id, title, price }]} />
+        <PropertyMap listings={[{ id, title, price, coordinates: "coordinates" in property ? property.coordinates : undefined }]} production={production} />
         <h2>{copy.project}</h2><p>{copy.projectHelp}</p>
         <Link href={`/${locale}/information/cambodia`}>{copy.project}</Link>
       </article>
-      {!loading && !error && <PropertyInquiry propertyId={id} locale={locale} available={(property.availability ?? "AVAILABLE") === "AVAILABLE"} />}
+      {!loading && !error && <PropertyInquiry propertyId={id} locale={locale} available={(property.availability ?? "AVAILABLE") === "AVAILABLE"} production={production} />}
       </div>
     </>}
   </main>;

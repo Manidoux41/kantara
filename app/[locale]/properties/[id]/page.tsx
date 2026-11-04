@@ -10,6 +10,9 @@ import { PropertyDetails } from "@/components/public/property-details";
 import { LanguageSelector } from "@/components/public/language-selector";
 import { propertyPath } from "@/lib/properties/presentation";
 import { propertyMessages } from "@/lib/i18n/property";
+import { agencyEnabled } from "@/lib/database-config";
+import { agencyCatalogue } from "@/services/agency/catalogue";
+import { connection } from "next/server";
 
 export function generateStaticParams() {
   return locales.flatMap((locale) => demoProperties.map((property) => ({ locale, id: property.id })));
@@ -27,8 +30,10 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/properti
 export default async function PropertyPage({ params }: PageProps<"/[locale]/properties/[id]">) {
   const { locale, id } = await params;
   if (!hasLocale(locales, locale)) notFound();
-  const property = demoProperties.find((item) => item.id === id) ?? null;
-  if (!property && (process.env.NODE_ENV !== "development" || !/^[a-f0-9]{8}-[a-f0-9-]{27}$/.test(id))) notFound();
+  const production = agencyEnabled();
+  if (production) await connection();
+  const property = production ? (await agencyCatalogue()).find((item) => item.id === id) ?? null : demoProperties.find((item) => item.id === id) ?? null;
+  if (!property && (production || process.env.NODE_ENV !== "development" || !/^[a-f0-9]{8}-[a-f0-9-]{27}$/.test(id))) notFound();
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Home" });
   return <>
@@ -36,7 +41,7 @@ export default async function PropertyPage({ params }: PageProps<"/[locale]/prop
       <Link href={`/${locale}`} className="brand"><Image src="/images/kantara-logo.svg" alt="KANTARA" width={240} height={64} preload /></Link>
       <LanguageSelector locale={locale} label={t("language")} path={`/properties/${encodeURIComponent(id)}`} />
     </header>
-    <PropertyDetails id={id} initial={property} locale={locale}
+    <PropertyDetails id={id} initial={property} locale={locale} production={production}
       initialPrice={property ? new Intl.NumberFormat(locale, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(property.price) : ""} />
   </>;
 }

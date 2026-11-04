@@ -1,10 +1,120 @@
 # KANTARA
 
 Single Next.js application for international property services in Cambodia.
-The project currently provides the database foundation, a read-only public
-REST API, a seven-language visual property preview and a local-only agency
-workflow demonstration with connected CRM/calendar and bilingual draft PDFs. It is not a complete
-agency management product.
+The application supports a real, authenticated PostgreSQL-backed agency as well
+as the separate local demonstration. Enable the production mode explicitly;
+it never imports the fictional catalogue or demo accounts.
+
+## PostgreSQL agency and Vercel
+
+1. Set private environment variables in `.env.local` and Vercel:
+   - `AGENCY_MODE=production`.
+   - At least one PostgreSQL URL. Runtime preference:
+     `DATABASE_URL_POOLED`, `DATABASE_URL`, `POSTGRES_URL`, `PRISMA_DATABASE_URL`.
+     Migrations prefer `POSTGRES_URL`. URLs must use `postgres://` or
+     `postgresql://`; Prisma Accelerate URLs are not PostgreSQL connections.
+     All configured aliases must point to the **same database**.
+   - `ADMIN_EMAIL` and a new `ADMIN_PASSWORD` (16–128 characters).
+   - `AGENCY_ENCRYPTION_KEY`: 32 random bytes encoded as **64 hexadecimal
+     characters**. Copy the original key from your ignored local configuration
+     to Vercel, keep a secure backup and never regenerate it on redeployment.
+     Losing/changing it prevents decryption; the application fails explicitly
+     rather than resetting records.
+   - `SITE_URL`: the exact canonical HTTPS origin on Vercel.
+2. Run `npm run db:deploy`, then `npm run db:bootstrap` once from a trusted
+   terminal. Migrations are additive; never use database reset on live data.
+   Bootstrap creates an empty agency and one administrator, storing a salted
+   scrypt hash, not the bootstrap password. Repeating bootstrap preserves all
+   existing records and passwords. Changing `ADMIN_PASSWORD` afterwards does
+   not reset the stored account; use the authenticated password-change form.
+3. Open `/{locale}/admin`, for example `/fr/admin`, and sign in using
+   `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Only an administrator can create clients,
+   properties, contracts, receipts, appointments and agents. Agents can read
+   their explicitly assigned properties, CRM contacts/appointments and inquiries.
+   The interface, API and catalogue have no fictional fallback in this mode.
+4. On Vercel use Node.js **24 or newer**, `npm run build`, and the usual Next.js
+   deployment. `postinstall` generates Prisma Client; deploy database migrations
+   as a controlled release step before the build. Do not run bootstrap on every
+   HTTP request or deploy. A Vercel deployment is not performed by these commands.
+
+### Storage, files and account scope
+
+Existing validated business commands are retained behind authenticated
+`/api/agency/*` endpoints. CRM, calendar, contract snapshots, financial entries,
+accounts, throttling, session digests, hiring dossiers and inquiries are stored
+in a versioned **encrypted PostgreSQL aggregate** (`AgencyWorkspace`), not
+temporary Vercel files. Transaction-scoped PostgreSQL advisory locks serialize
+writes across instances; revisions reject stale UI commands. This is an
+intermediate data model, not fully normalized CRM tables.
+
+Property/owner/location/translation/image tables provide the public projection,
+updated atomically with the private source of truth. `/api/v1/catalogue` feeds
+the public UI; the existing filtered `/api/v1/properties` API reads the same
+property tables. Only published properties appear; unpublishing also closes
+public photo access. Descriptions are agency-authored, not automatically
+translated. Coordinates are optional and explicitly entered by the admin;
+no fictitious position is assigned to a real property.
+
+Property photos and private documents persist as encrypted `AgencyAsset`
+payloads in PostgreSQL. Maximum **20 photos and 20 documents per property**,
+JPEG/PNG/PDF, **2.5 MiB per file** (compatible with Vercel request-body limits).
+Only published property photos are public. Property documents and hiring
+documents require administrator authentication and are served as attachments,
+never through public storage URLs. No antivirus scanning is supplied; accept
+only trusted files. Hiring keeps its required approved identity document,
+reviewed optional residency document, unsigned EN–KM employment draft and
+explicit external legal-review/signature confirmations before account creation.
+Temporary agent passwords must be replaced on first sign-in.
+
+Sessions use separate opaque eight-hour HttpOnly/SameSite=Strict API cookies,
+Secure on HTTPS, and fresh server-side active-account checks. Logout, password
+replacement/reset and disabling revoke sessions. Demo cookies and credentials
+do not authenticate production requests. Never expose the private environment
+variables through `NEXT_PUBLIC_*`.
+
+The existing bounded workflow capacities remain: 100 clients, properties,
+contracts and transactions; 200 leads/inquiries, 500 appointments, 2,000
+activities/audit events, 25 accounts and a 48 MiB private aggregate. Capacity
+errors are explicit, not silent truncation. Plan retention/archival and
+normalization/object storage before larger operations; database backups and
+the encryption-key backup must be managed separately. Signing out does not
+delete stored records. This is not certified accounting or a legal-compliance
+guarantee; legal identity, fee schedules and retention policies still require
+agency completion and Cambodian professional review.
+
+### PDFs, email and agenda
+
+Production PDFs use bundled `@sparticuz/chromium` on Vercel and installed
+Chrome/`PDF_CHROMIUM_PATH` locally. Chromium binaries and the Khmer font are
+traced into PDF functions. Use at least 1 GiB function memory and allow a
+60-second function duration. Rendering blocks external network access and
+JavaScript. Draft/legal-review notices remain intentional: activating the
+administration does not certify contracts or add electronic signatures.
+The Linux/Vercel binary cannot be executed on macOS; verify a PDF after the
+first Vercel deployment.
+
+The connected internal agenda persists in PostgreSQL with Cambodia time and
+authenticated, one-way ICS export. It is **not** bidirectional Google/Microsoft
+calendar sync. Email contact requests still require the Resend verified sender,
+agency fallback recipient and Cloudflare Turnstile configuration below.
+`CONTACT_ENABLED=false` explicitly disables sending; no pretend success is
+returned. When enabled, requests persist privately in PostgreSQL with provider
+idempotency; notifications use the assigned active agent's configured email
+then agency fallback. Email acceptance does not confirm delivery or a booking.
+
+### Verification
+
+`npm run typecheck`, `npm run lint`, `npm test` and `npm run build` are the
+standard checks. `npm run test:agency` creates a uniquely named **isolated
+PostgreSQL schema**, bootstraps test-only credentials, runs auth, full workflow,
+file limits, PDF and Chrome browser tests, then removes only that schema and
+its temporary build directory. It never writes test fixtures into the real
+agency. This command needs schema-creation permission and installed Chrome
+(or `PDF_CHROMIUM_PATH`); port 3110 must be free (`TEST_AGENCY_PORT` overrides).
+`npm run test:agency -- --production` runs the same journeys against an
+isolated optimized production build instead of the development server.
+`AGENCY_DB_SCHEMA`, `NEXT_DIST_DIR` and `AGENCY_TEST_TSCONFIG` are test-isolation
+settings; leave them unset on Vercel.
 
 ## Visual demonstration
 
@@ -55,7 +165,7 @@ before rentals, sorting within each group rather than comparing purchase prices
 with monthly rents. Prices are illustrative USD amounts; area means living area,
 not land area. The same filter component and logic serve the admin property list.
 
-In development the catalogue reads published listings from the browser's
+With `AGENCY_MODE` unset (demonstration mode), the catalogue reads published listings from the browser's
 local demo API workspace (described below); production uses the six fixtures.
 Neither mode seeds, reads or modifies PostgreSQL, and neither is a fallback for
 `/api/v1/properties`.
@@ -66,9 +176,8 @@ These illustrations are concepts, not photographs of actual properties.
 No external image or font service is required; Khmer and CJK font rendering
 uses the platform's installed fallback fonts.
 
-The public preview is currently always visible on localized homepages. Replace
-it with the live catalogue before a commercial launch; it is not controlled by
-database availability.
+Setting `AGENCY_MODE=production` replaces this preview with the live catalogue;
+database failures are explicit and never fall back to these fixtures.
 
 ### Map, full property pages and contact requests
 

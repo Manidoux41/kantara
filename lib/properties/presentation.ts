@@ -1,7 +1,7 @@
 import type { DemoProperty } from "@/lib/demo/properties";
 import type { BusinessProperty } from "@/lib/demo/business-types";
 
-export type CatalogueProperty = DemoProperty | Omit<BusinessProperty, "ownerId" | "titleReference">;
+export type CatalogueProperty = (DemoProperty | Omit<BusinessProperty, "ownerId" | "titleReference">) & { images?: string[] };
 export type MapPoint = { latitude: number; longitude: number };
 
 // Fictional approximate positions, not actual property addresses.

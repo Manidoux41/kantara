@@ -8,10 +8,13 @@ export type BusinessClient = {
   propertyIds: string[];
   profile?: ContactProfile;
 };
-export type BusinessProperty = Omit<DemoProperty, "key"> & {
+export type BusinessProperty = Omit<DemoProperty, "key" | "image"> & {
+  image: string;
   title: string; address: string; titleReference: string; ownerId: string;
   availability: "AVAILABLE" | "SOLD" | "RENTED";
   publication: "DRAFT" | "PUBLISHED"; publishedAt: string | null;
+  description?: string;
+  coordinates?: { latitude: number; longitude: number };
 };
 export type ContractKind = "SALE_MANDATE" | "RENTAL_MANDATE" | "LEASE";
 export type ContractLine = { propertyId: string; price: string; expectedCommission: string };

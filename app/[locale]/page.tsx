@@ -10,6 +10,7 @@ import { BrandMark } from "@/components/public/brand-mark";
 import { Icon } from "@/components/public/icon";
 import { DemoCatalogue } from "@/components/public/demo-catalogue";
 import { demoProperties } from "@/lib/demo/properties";
+import { agencyEnabled } from "@/lib/database-config";
 
 export async function generateMetadata({
   params,
@@ -32,7 +33,7 @@ export async function generateMetadata({
     openGraph: {
       type: "website", siteName: "KANTARA", title, description, url: `/${locale}`,
       locale: ogLocale[locale], alternateLocale: locales.filter((value) => value !== locale).map((value) => ogLocale[value]),
-      images: [{ url: socialImage, width: 1200, height: 630, alt: "KANTARA — Cambodia — Demonstration" }],
+      images: [{ url: socialImage, width: 1200, height: 630, alt: agencyEnabled() ? "KANTARA — Cambodia" : "KANTARA — Cambodia — Demonstration" }],
     },
     twitter: { card: "summary_large_image", title, description, images: [socialImage] },
     alternates: {
@@ -52,14 +53,14 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
   const priceFormatter = new Intl.NumberFormat(locale, {
     style: "currency", currency: "USD", maximumFractionDigits: 0,
   });
-  const prices = Object.fromEntries(demoProperties.map((property) => [
+  const prices = Object.fromEntries((agencyEnabled() ? [] : demoProperties).map((property) => [
     property.id, priceFormatter.format(property.price),
   ]));
 
   return (
     <>
       <a className="skip-link" href="#main">{preview("skip")}</a>
-      <div className="preview-banner">{preview("banner")}</div>
+      {!agencyEnabled() && <div className="preview-banner">{preview("banner")}</div>}
       <header className="site-header section-shell">
         <Link className="brand" href={`/${locale}`} aria-label={preview("homeLabel")}>
           <Image className="company-logo" src="/images/kantara-logo.svg" alt="KANTARA" width={360} height={96} preload />
@@ -95,7 +96,7 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
           <span>PHNOM PENH</span><span className="strip-diamond" aria-hidden="true">◇</span><span>KAMPOT</span>
         </div>
 
-        <DemoCatalogue prices={prices} />
+        <DemoCatalogue prices={prices} production={agencyEnabled()} />
 
         <section id="approach" className="approach" aria-labelledby="approach-title">
           <div className="section-shell">

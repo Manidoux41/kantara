@@ -159,7 +159,7 @@ export function LeadWorkspace({ state, busy, command }: Props) {
     </article>)}</div>
   </>;
 }
-export function CalendarWorkspace({ state, busy, command }: Props) {
+export function CalendarWorkspace({ state, busy, command, calendarEndpoint = "/api/demo/admin/calendar" }: Props & { calendarEndpoint?: string }) {
   const t = useTranslations("Crm"), locale = useLocale();
   const [date, setDate] = useState(cambodiaDate);
   const [month, setMonth] = useState(() => cambodiaDate().slice(0, 7));
@@ -180,7 +180,7 @@ export function CalendarWorkspace({ state, busy, command }: Props) {
       <h2>{new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(first)}</h2>
       <button type="button" className="text-button" onClick={() => changeMonth(1)}>{t("next")}</button>
       <button type="button" className="text-button" onClick={() => { const today = cambodiaDate(); setDate(today); setMonth(today.slice(0, 7)); }}>{t("today")}</button>
-      <a className="button button-dark" href="/api/demo/admin/calendar" download="kantara-demo.ics">{t("export")}</a>
+      <a className="button button-dark" href={calendarEndpoint} download="kantara.ics">{t("export")}</a>
     </div>
     <CrmField label={t("agent")}><select value={agentId} onChange={(event) => setAgentId(event.target.value)}><option value="">{t("none")}</option>{state.agents.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></CrmField>
     <div className="crm-calendar" role="group" aria-label={t("calendar")}>

@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  typescript: { tsconfigPath: process.env.AGENCY_TEST_TSCONFIG ?? "tsconfig.json" },
+  serverExternalPackages: ["@sparticuz/chromium", "playwright-core"],
+  outputFileTracingIncludes: {
+    "/api/agency/**": ["./public/fonts/NotoSansKhmer.ttf", "./node_modules/@sparticuz/chromium/bin/**"],
+  },
   outputFileTracingExcludes: {
     "/*": ["./.kantara-demo/**/*", "./.kantara-team/**/*"],
   },

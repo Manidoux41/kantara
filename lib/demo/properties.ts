@@ -69,7 +69,7 @@ export function validDemoRanges(filters: DemoFilters) {
   });
 }
 
-export type DemoFilterable = Omit<DemoProperty, "key">;
+export type DemoFilterable = Omit<DemoProperty, "key" | "image">;
 export function filterDemoProperties<T extends DemoFilterable>(filters: DemoFilters, source: readonly T[]): T[];
 export function filterDemoProperties(filters: DemoFilters): DemoProperty[];
 export function filterDemoProperties(filters: DemoFilters, source: readonly DemoFilterable[] = demoProperties) {

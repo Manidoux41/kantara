@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { LanguageSelector } from "@/components/public/language-selector";
 import { agencyResources, informationSections, informationTopics, legalMessages } from "@/lib/i18n/legal";
 import { locales } from "@/lib/i18n/routing";
+import { agencyEnabled } from "@/lib/database-config";
 
 function topicFrom(value: string) {
   const topic = informationTopics.find((item) => item === value);
@@ -21,7 +22,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/[locale]/information/[topic]">): Promise<Metadata> {
   const { locale, topic: value } = await params;
   if (!hasLocale(locales, locale)) notFound();
-  const topic = topicFrom(value), t = legalMessages(locale);
+  const topic = topicFrom(value), t = legalMessages(locale, agencyEnabled());
   return {
     title: `KANTARA | ${t[topic]}`,
     description: t.notice,
@@ -37,12 +38,12 @@ export default async function InformationPage({ params }: PageProps<"/[locale]/i
   const { locale, topic: value } = await params;
   if (!hasLocale(locales, locale)) notFound();
   setRequestLocale(locale);
-  const topic = topicFrom(value), t = legalMessages(locale);
+  const topic = topicFrom(value), t = legalMessages(locale, agencyEnabled());
   const home = await getTranslations({ locale, namespace: "Home" });
   const preview = await getTranslations({ locale, namespace: "Preview" });
   return <>
     <a className="skip-link" href="#main">{preview("skip")}</a>
-    <div className="preview-banner">{preview("banner")}</div>
+    {!agencyEnabled() && <div className="preview-banner">{preview("banner")}</div>}
     <header className="site-header section-shell">
       <Link className="brand" href={`/${locale}`} aria-label={preview("homeLabel")}>
         <Image className="company-logo" src="/images/kantara-logo.svg" alt="KANTARA" width={360} height={96} />
