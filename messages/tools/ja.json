@@ -1,0 +1,31 @@
+{
+  "price": "価格（USD）", "area": "居住面積（m²）", "bedrooms": "寝室", "rooms": "部屋",
+  "priceMin": "最低価格（USD）", "priceMax": "最高価格（USD）",
+  "areaMin": "最小面積（m²）", "areaMax": "最大面積（m²）",
+  "bedroomsMin": "寝室の最小数", "bedroomsMax": "寝室の最大数",
+  "roomsMin": "部屋の最小数", "roomsMax": "部屋の最大数",
+  "minimum": "最小", "maximum": "最大", "sort": "物件の並べ替え",
+  "sorts": {
+    "default": "コレクション順", "priceAsc": "価格の安い順", "priceDesc": "価格の高い順",
+    "areaAsc": "面積の小さい順", "areaDesc": "面積の大きい順",
+    "bedroomsAsc": "寝室の少ない順", "bedroomsDesc": "寝室の多い順",
+    "roomsAsc": "部屋の少ない順", "roomsDesc": "部屋の多い順"
+  },
+  "priceHint": "売買価格と月額賃料は USD 表示です。混合の価格順では売買を賃貸より先にまとめ、売買価格と賃料を比較しません。検索で適用してください。",
+  "rangeError": "0 以上の値を入力し、最小値を最大値以下にしてください。寝室と部屋の数は整数です。",
+  "mediaTitle": "物件の写真と書類",
+  "localNotice": "ローカルデモ専用：サーバーへ送信されません。再読み込み、言語変更、ページ移動でファイルは失われます。架空のイラストは選択写真に含まれません。",
+  "photo": "ローカル写真", "document": "ローカル PDF 書類",
+  "addPhotos": "写真を追加", "addDocuments": "PDF を追加",
+  "photoHelp": "物件ごとに合計 20 枚まで、JPEG / PNG / WebP、1 枚 10 MiB。一括選択は全件受理または全件拒否されます。",
+  "documentHelp": "物件ごとに合計 10 PDF まで、各 20 MiB。名前とサイズのみ表示し、内容の閲覧やウイルス検査は行いません。",
+  "remove": "削除", "checking": "ファイルを確認中…",
+  "errors": {
+    "count": "一括選択を拒否：物件ごとに写真 20 枚または PDF 10 件の上限を超えています。",
+    "size": "一括選択を拒否：空または大きすぎるファイルです（写真 10 MiB、PDF 20 MiB）。",
+    "format": "一括選択を拒否：形式、拡張子またはシグネチャが許可されていません。",
+    "duplicate": "一括選択を拒否：このファイルは選択済みです。",
+    "read": "ファイルを読み込めません。再試行してください。",
+    "decode": "一括選択を拒否：画像をデコードできません。"
+  }
+}

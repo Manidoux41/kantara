@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="96" viewBox="0 0 360 96" fill="none" role="img" aria-labelledby="title">
+  <title id="title">KANTARA</title>
+  <circle cx="36" cy="45" r="31" fill="#fff3c9"/>
+  <g transform="translate(12 18)" stroke="#215e87" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 3v6m-4 4 4-5 4 5M15 22l9-10 9 10M8 32l16-15 16 15M4 37l20-15 20 15M9 37v11h30V37M19 48V35h10v13M3 49h42" stroke-width="1.6"/>
+    <path d="M12 37h4m16 0h4M12 42h4m16 0h4" stroke-width="1.4"/>
+  </g>
+  <text x="84" y="58" fill="#17334d" font-family="Georgia,serif" font-size="35" letter-spacing="5">KANTARA</text>
+</svg>

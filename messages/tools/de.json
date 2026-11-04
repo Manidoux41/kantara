@@ -1,0 +1,31 @@
+{
+  "price": "Preis (USD)", "area": "Wohnfläche (m²)", "bedrooms": "Schlafzimmer", "rooms": "Zimmer",
+  "priceMin": "Mindestpreis in USD", "priceMax": "Höchstpreis in USD",
+  "areaMin": "Mindestfläche in m²", "areaMax": "Höchstfläche in m²",
+  "bedroomsMin": "Schlafzimmer mindestens", "bedroomsMax": "Schlafzimmer höchstens",
+  "roomsMin": "Zimmer mindestens", "roomsMax": "Zimmer höchstens",
+  "minimum": "Min.", "maximum": "Max.", "sort": "Immobilien sortieren",
+  "sorts": {
+    "default": "Reihenfolge der Kollektion", "priceAsc": "Preis aufsteigend", "priceDesc": "Preis absteigend",
+    "areaAsc": "Fläche aufsteigend", "areaDesc": "Fläche absteigend",
+    "bedroomsAsc": "Schlafzimmer aufsteigend", "bedroomsDesc": "Schlafzimmer absteigend",
+    "roomsAsc": "Zimmer aufsteigend", "roomsDesc": "Zimmer absteigend"
+  },
+  "priceHint": "Kaufpreise und Monatsmieten in USD. Bei gemischter Preissortierung stehen Verkäufe vor Vermietungen; Kaufpreis und Miete werden nicht verglichen. Mit Suchen anwenden.",
+  "rangeError": "Nichtnegative Werte eingeben: Minimum darf Maximum nicht überschreiten. Schlafzimmer und Zimmer als ganze Zahlen.",
+  "mediaTitle": "Fotos und Dokumente der Immobilie",
+  "localNotice": "Nur lokale Demo: keine Serverübertragung. Dateien gehen beim Neuladen, Sprachwechsel oder Verlassen verloren. Fiktive Illustrationen zählen nicht als ausgewählte Fotos.",
+  "photo": "Lokale Fotos", "document": "Lokale PDF-Dokumente",
+  "addPhotos": "Fotos hinzufügen", "addDocuments": "PDFs hinzufügen",
+  "photoHelp": "Insgesamt höchstens 20 Fotos je Immobilie, JPEG / PNG / WebP, je 10 MiB. Jede Auswahl wird vollständig angenommen oder abgelehnt.",
+  "documentHelp": "Insgesamt höchstens 10 PDFs je Immobilie, je 20 MiB. Nur Name und Größe werden angezeigt: keine Inhaltsanzeige oder Virenprüfung.",
+  "remove": "Entfernen", "checking": "Dateien werden geprüft…",
+  "errors": {
+    "count": "Auswahl abgelehnt: Grenze von 20 Fotos oder 10 PDFs je Immobilie überschritten.",
+    "size": "Auswahl abgelehnt: leere oder zu große Datei (Foto: 10 MiB; PDF: 20 MiB).",
+    "format": "Auswahl abgelehnt: Dateiformat, Erweiterung oder Signatur nicht erlaubt.",
+    "duplicate": "Auswahl abgelehnt: Datei bereits ausgewählt.",
+    "read": "Dateien können nicht gelesen werden. Erneut versuchen.",
+    "decode": "Auswahl abgelehnt: Bild kann nicht dekodiert werden."
+  }
+}

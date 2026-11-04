@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Locale {
+  en
+  fr
+  km
+  zh
+  ja
+  de
+  es
+}
+
+enum PropertyType {
+  VILLA
+  APARTMENT
+  HOUSE
+  CONDOMINIUM
+  LAND
+  OFFICE
+  COMMERCIAL
+  GUESTHOUSE
+  HOTEL
+  RESORT
+  DEVELOPMENT
+}
+
+enum TransactionType {
+  SALE
+  RENT
+  SALE_AND_RENT
+}
+
+enum PropertyStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Availability {
+  AVAILABLE
+  RESERVED
+  SOLD
+  RENTED
+}
+
+model User {
+  id        String    @id @default(uuid()) @db.Uuid
+  email     String    @unique
+  name      String
+  active    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  roles     Role[]
+  agent     Agent?
+}
+
+model Role {
+  id          String       @id @default(uuid()) @db.Uuid
+  key         String       @unique
+  users       User[]
+  permissions Permission[]
+}
+
+model Permission {
+  id    String @id @default(uuid()) @db.Uuid
+  key   String @unique
+  roles Role[]
+}
+
+model Agent {
+  id         String     @id @default(uuid()) @db.Uuid
+  userId     String     @unique @db.Uuid
+  user       User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  properties Property[]
+}
+
+model PropertyOwner {
+  id         String     @id @default(uuid()) @db.Uuid
+  name       String
+  email      String?
+  phone      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+  properties Property[]
+}
+
+model Partner {
+  id         String     @id @default(uuid()) @db.Uuid
+  name       String
+  email      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+  properties Property[]
+}
+
+model Location {
+  id         String     @id @default(uuid()) @db.Uuid
+  name       String
+  parentId   String?    @db.Uuid
+  parent     Location?  @relation("LocationTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children   Location[] @relation("LocationTree")
+  properties Property[]
+
+  @@index([parentId])
+}
+
+model Property {
+  id               String                @id @default(uuid()) @db.Uuid
+  reference        String                @unique
+  slug             String                @unique
+  type             PropertyType
+  transactionType  TransactionType
+  status           PropertyStatus        @default(DRAFT)
+  availability     Availability          @default(AVAILABLE)
+  salePrice        Decimal?              @db.Decimal(18, 2)
+  rentalPrice      Decimal?              @db.Decimal(18, 2)
+  currency         String                @default("USD") @db.Char(3)
+  livingArea       Decimal?              @db.Decimal(14, 2)
+  landArea         Decimal?              @db.Decimal(14, 2)
+  bedrooms         Int?
+  bathrooms        Int?
+  rooms            Int?
+  floors           Int?
+  constructionYear Int?
+  furnished        Boolean               @default(false)
+  ownerId          String                @db.Uuid
+  owner            PropertyOwner         @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  locationId       String                @db.Uuid
+  location         Location              @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  partnerId        String?               @db.Uuid
+  partner          Partner?              @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  agents           Agent[]
+  translations     PropertyTranslation[]
+  images           PropertyImage[]
+  features         PropertyFeature[]
+  publishedAt      DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  deletedAt        DateTime?
+
+  @@index([status, deletedAt, publishedAt])
+  @@index([type, transactionType])
+  @@index([locationId])
+  @@index([ownerId])
+  @@index([partnerId])
+}
+
+model PropertyTranslation {
+  id          String   @id @default(uuid()) @db.Uuid
+  propertyId  String   @db.Uuid
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  locale      Locale
+  title       String
+  description String
+  published   Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([propertyId, locale])
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @db.Uuid
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  url        String
+  alt        String
+  position   Int      @default(0)
+
+  @@index([propertyId, position])
+}
+
+model PropertyFeature {
+  id         String     @id @default(uuid()) @db.Uuid
+  key        String     @unique
+  properties Property[]
+}

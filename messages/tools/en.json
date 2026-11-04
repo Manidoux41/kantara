@@ -1,0 +1,31 @@
+{
+  "price": "Price (USD)", "area": "Living area (m²)", "bedrooms": "Bedrooms", "rooms": "Rooms",
+  "priceMin": "Minimum price in USD", "priceMax": "Maximum price in USD",
+  "areaMin": "Minimum area in m²", "areaMax": "Maximum area in m²",
+  "bedroomsMin": "Minimum bedrooms", "bedroomsMax": "Maximum bedrooms",
+  "roomsMin": "Minimum rooms", "roomsMax": "Maximum rooms",
+  "minimum": "Min.", "maximum": "Max.", "sort": "Sort properties",
+  "sorts": {
+    "default": "Collection order", "priceAsc": "Price: low to high", "priceDesc": "Price: high to low",
+    "areaAsc": "Area: low to high", "areaDesc": "Area: high to low",
+    "bedroomsAsc": "Bedrooms: low to high", "bedroomsDesc": "Bedrooms: high to low",
+    "roomsAsc": "Rooms: low to high", "roomsDesc": "Rooms: high to low"
+  },
+  "priceHint": "Sale prices in USD; monthly rents in USD. Mixed price sorting groups sales before rentals without comparing sale prices and rents. Select Search to apply.",
+  "rangeError": "Enter nonnegative values with minimum no greater than maximum. Bedrooms and rooms must be whole numbers.",
+  "mediaTitle": "Property photos and documents",
+  "localNotice": "Local demo only: nothing is sent to a server. Files are lost on reload, language change or leaving the page. Fictional illustrations are not selected photos.",
+  "photo": "Local photos", "document": "Local PDF documents",
+  "addPhotos": "Add photos", "addDocuments": "Add PDFs",
+  "photoHelp": "Up to 20 photos in total per property, JPEG / PNG / WebP, 10 MiB each. Each batch is accepted or rejected in full.",
+  "documentHelp": "Up to 10 PDFs in total per property, 20 MiB each. Only names and sizes are shown: no content viewer or antivirus scanning.",
+  "remove": "Remove", "checking": "Checking files…",
+  "errors": {
+    "count": "Batch rejected: maximum of 20 photos or 10 PDFs per property exceeded.",
+    "size": "Batch rejected: empty or oversized file (photo: 10 MiB; PDF: 20 MiB).",
+    "format": "Batch rejected: file format, extension or signature is not allowed.",
+    "duplicate": "Batch rejected: this file is already selected.",
+    "read": "Unable to read files. Please try again.",
+    "decode": "Batch rejected: this image cannot be decoded."
+  }
+}

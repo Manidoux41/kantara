@@ -1,0 +1,31 @@
+{
+  "price": "Prix (USD)", "area": "Surface habitable (m²)", "bedrooms": "Chambres", "rooms": "Pièces",
+  "priceMin": "Prix minimum en USD", "priceMax": "Prix maximum en USD",
+  "areaMin": "Surface minimum en m²", "areaMax": "Surface maximum en m²",
+  "bedroomsMin": "Chambres minimum", "bedroomsMax": "Chambres maximum",
+  "roomsMin": "Pièces minimum", "roomsMax": "Pièces maximum",
+  "minimum": "Min.", "maximum": "Max.", "sort": "Trier les biens",
+  "sorts": {
+    "default": "Ordre de la collection", "priceAsc": "Prix croissant", "priceDesc": "Prix décroissant",
+    "areaAsc": "Surface croissante", "areaDesc": "Surface décroissante",
+    "bedroomsAsc": "Chambres croissantes", "bedroomsDesc": "Chambres décroissantes",
+    "roomsAsc": "Pièces croissantes", "roomsDesc": "Pièces décroissantes"
+  },
+  "priceHint": "Prix de vente en USD ; loyers mensuels en USD. En mode mixte, le tri par prix regroupe les ventes avant les locations, sans comparer vente et loyer. Cliquez sur Rechercher pour appliquer.",
+  "rangeError": "Indiquez des valeurs positives ou nulles, avec un minimum inférieur ou égal au maximum. Chambres et pièces : nombres entiers.",
+  "mediaTitle": "Photos et documents du bien",
+  "localNotice": "Démo locale uniquement : aucun envoi au serveur. Fichiers perdus au rechargement, au changement de langue ou en quittant la page. Les illustrations fictives ne font pas partie des photos sélectionnées.",
+  "photo": "Photos locales", "document": "Documents PDF locaux",
+  "addPhotos": "Ajouter des photos", "addDocuments": "Ajouter des PDF",
+  "photoHelp": "20 photos maximum au total par bien, JPEG / PNG / WebP, 10 Mio par photo. Chaque lot est accepté ou refusé en entier.",
+  "documentHelp": "10 PDF maximum au total par bien, 20 Mio par PDF. Nom et taille affichés uniquement : pas de lecture du contenu ni de contrôle antivirus.",
+  "remove": "Supprimer", "checking": "Vérification des fichiers…",
+  "errors": {
+    "count": "Lot refusé : limite de 20 photos ou 10 PDF par bien dépassée.",
+    "size": "Lot refusé : fichier vide ou trop volumineux (photo : 10 Mio ; PDF : 20 Mio).",
+    "format": "Lot refusé : format, extension ou signature du fichier non autorisé.",
+    "duplicate": "Lot refusé : ce fichier est déjà sélectionné.",
+    "read": "Impossible de lire les fichiers. Réessayez.",
+    "decode": "Lot refusé : cette image ne peut pas être décodée."
+  }
+}

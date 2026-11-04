@@ -1,0 +1,31 @@
+{
+  "price": "价格（美元）", "area": "居住面积（平方米）", "bedrooms": "卧室", "rooms": "房间",
+  "priceMin": "最低价格（美元）", "priceMax": "最高价格（美元）",
+  "areaMin": "最小面积（平方米）", "areaMax": "最大面积（平方米）",
+  "bedroomsMin": "最少卧室数", "bedroomsMax": "最多卧室数",
+  "roomsMin": "最少房间数", "roomsMax": "最多房间数",
+  "minimum": "最小", "maximum": "最大", "sort": "房源排序",
+  "sorts": {
+    "default": "精选顺序", "priceAsc": "价格从低到高", "priceDesc": "价格从高到低",
+    "areaAsc": "面积从小到大", "areaDesc": "面积从大到小",
+    "bedroomsAsc": "卧室从少到多", "bedroomsDesc": "卧室从多到少",
+    "roomsAsc": "房间从少到多", "roomsDesc": "房间从多到少"
+  },
+  "priceHint": "售价及月租以美元计。混合价格排序将出售房源排在出租房源之前，不直接比较售价与租金。点击搜索以应用。",
+  "rangeError": "请输入非负数，最小值不得超过最大值。卧室及房间数必须为整数。",
+  "mediaTitle": "房源照片与文档",
+  "localNotice": "仅限本地演示：不向服务器发送文件。刷新、切换语言或离开页面后文件将丢失。虚构插图不计入所选照片。",
+  "photo": "本地照片", "document": "本地 PDF 文档",
+  "addPhotos": "添加照片", "addDocuments": "添加 PDF",
+  "photoHelp": "每套房源总计最多 20 张照片，JPEG / PNG / WebP，每张 10 MiB。每批文件整体接受或拒绝。",
+  "documentHelp": "每套房源总计最多 10 个 PDF，每个 20 MiB。仅显示名称和大小，不查看内容，也不进行病毒扫描。",
+  "remove": "移除", "checking": "正在检查文件…",
+  "errors": {
+    "count": "整批拒绝：超过每套房源 20 张照片或 10 个 PDF 的限制。",
+    "size": "整批拒绝：文件为空或过大（照片：10 MiB；PDF：20 MiB）。",
+    "format": "整批拒绝：不允许的文件格式、扩展名或签名。",
+    "duplicate": "整批拒绝：已选择此文件。",
+    "read": "无法读取文件，请重试。",
+    "decode": "整批拒绝：无法解码此图片。"
+  }
+}

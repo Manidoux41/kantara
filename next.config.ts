@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
+  outputFileTracingExcludes: {
+    "/*": ["./.kantara-demo/**/*", "./.kantara-team/**/*"],
+  },
   /* config options here */
   experimental: {
     agentFeedback: true,
@@ -17,4 +21,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withNextIntl = createNextIntlPlugin("./lib/i18n/request.ts");
+
+export default withNextIntl(nextConfig);

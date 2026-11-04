@@ -1,0 +1,31 @@
+{
+  "price": "Precio (USD)", "area": "Superficie habitable (m²)", "bedrooms": "Dormitorios", "rooms": "Estancias",
+  "priceMin": "Precio mínimo en USD", "priceMax": "Precio máximo en USD",
+  "areaMin": "Superficie mínima en m²", "areaMax": "Superficie máxima en m²",
+  "bedroomsMin": "Dormitorios mínimos", "bedroomsMax": "Dormitorios máximos",
+  "roomsMin": "Estancias mínimas", "roomsMax": "Estancias máximas",
+  "minimum": "Mín.", "maximum": "Máx.", "sort": "Ordenar inmuebles",
+  "sorts": {
+    "default": "Orden de la colección", "priceAsc": "Precio ascendente", "priceDesc": "Precio descendente",
+    "areaAsc": "Superficie ascendente", "areaDesc": "Superficie descendente",
+    "bedroomsAsc": "Dormitorios ascendentes", "bedroomsDesc": "Dormitorios descendentes",
+    "roomsAsc": "Estancias ascendentes", "roomsDesc": "Estancias descendentes"
+  },
+  "priceHint": "Precios de venta y alquileres mensuales en USD. El orden mixto por precio agrupa ventas antes que alquileres, sin comparar ambos importes. Pulse Buscar para aplicar.",
+  "rangeError": "Introduzca valores no negativos con mínimo menor o igual al máximo. Dormitorios y estancias deben ser enteros.",
+  "mediaTitle": "Fotos y documentos del inmueble",
+  "localNotice": "Solo demostración local: no se envía nada al servidor. Los archivos se pierden al recargar, cambiar de idioma o salir. Las ilustraciones ficticias no cuentan como fotos seleccionadas.",
+  "photo": "Fotos locales", "document": "Documentos PDF locales",
+  "addPhotos": "Añadir fotos", "addDocuments": "Añadir PDF",
+  "photoHelp": "Máximo total de 20 fotos por inmueble, JPEG / PNG / WebP, 10 MiB cada una. Cada lote se acepta o rechaza completo.",
+  "documentHelp": "Máximo total de 10 PDF por inmueble, 20 MiB cada uno. Solo se muestran nombre y tamaño: sin visor del contenido ni análisis antivirus.",
+  "remove": "Eliminar", "checking": "Comprobando archivos…",
+  "errors": {
+    "count": "Lote rechazado: supera 20 fotos o 10 PDF por inmueble.",
+    "size": "Lote rechazado: archivo vacío o demasiado grande (foto: 10 MiB; PDF: 20 MiB).",
+    "format": "Lote rechazado: formato, extensión o firma no permitido.",
+    "duplicate": "Lote rechazado: este archivo ya está seleccionado.",
+    "read": "No se pueden leer los archivos. Vuelva a intentarlo.",
+    "decode": "Lote rechazado: no se puede decodificar esta imagen."
+  }
+}
