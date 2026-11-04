@@ -6,6 +6,7 @@ import type { BusinessClient, BusinessState } from "@/lib/demo/business-types";
 import { contactCategories, leadSources, leadStages, type CrmSummary } from "@/lib/demo/crm-types";
 import { appointmentUtc, calendarMonth, cambodiaDate, localAppointmentTime } from "@/lib/demo/calendar";
 import { locales } from "@/lib/i18n/routing";
+import { dossierMessages } from "@/lib/i18n/dossiers";
 
 export type WorkspaceCommand = (payload: Record<string, unknown>, form?: HTMLFormElement) => Promise<void>;
 type Props = { state: BusinessState; busy: boolean; command: WorkspaceCommand };
@@ -30,11 +31,15 @@ function Timeline({ state, clientId }: { state: BusinessState; clientId?: string
   const t = useTranslations("Crm");
   const b = useTranslations("Business");
   const locale = useLocale();
+  const dossier = dossierMessages(locales.find((item) => item === locale) ?? "en");
   const activities = state.activities.filter((item) => !clientId || item.clientId === clientId).toReversed().slice(0, 100);
   return <ol className="crm-timeline">{activities.map((item) => <li key={item.id}>
     <time dateTime={item.at}>{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Phnom_Penh" }).format(new Date(item.at))}</time>
     <strong>{t(item.channel)}</strong>
-    <span>{item.channel !== "SYSTEM" ? item.text : item.action.startsWith("lead:")
+    <span>{item.channel !== "SYSTEM" ? item.text
+      : item.action === "createDocument" ? dossier.generate : item.action === "closeDossier" ? dossier.close
+        : item.action === "submitTransfer" ? dossier.submit : item.action === "approveBankTransfer" ? dossier.APPROVED
+          : item.action === "reviewTransfer" ? dossier.REJECTED : item.action.startsWith("lead:")
       ? `${t("stage")} : ${t(item.action.slice(5))}`
       : item.action.startsWith("appointment:") ? `${t("calendar")} : ${t(item.action.slice(12))}`
         : item.action === "createClient" ? b("newClient") : item.action === "createProperty" ? b("newProperty")

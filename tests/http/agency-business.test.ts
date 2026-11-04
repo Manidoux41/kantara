@@ -74,7 +74,16 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
   state = await command(cookie, { action: "closeTransaction", propertyId, contractId, closedAt: today, commission: "1000" });
   assert.equal(state.properties.at(-1).availability, "SOLD");
   const transactionId = state.transactions.at(-1).id;
-  state = await command(cookie, { action: "recordReceipt", transactionId, amount: "400", paidAt: today, reference: "TEST-RECEIPT-001" });
+  assert.equal((await api("admin", { action: "recordReceipt", revision: state.revision, transactionId, amount: "400", paidAt: today, reference: "TEST-RECEIPT-001" }, cookie)).status, 409);
+  const submit = await api("dossiers", { action: "submitTransfer", revision: state.revision, transactionId, amount: "400", paidAt: today,
+    reference: "TEST-RECEIPT-001", bankName: "VALIDATION BANK", payer: "VALIDATION PAYER", evidenceId: privateId }, cookie);
+  assert.equal(submit.status, 200);
+  const transferView = (await submit.json()).data;
+  assert.equal(transferView.revenue.received, "0.00");
+  const approval = await api("dossiers", { action: "reviewTransfer", revision: transferView.revision,
+    transferId: transferView.transfers.at(-1).id, approved: true, note: "VALIDATION bank verification" }, cookie);
+  assert.equal(approval.status, 200);
+  state = await business(cookie);
   assert.equal(state.revenue.received, "400.00");
   const run = async (input: Record<string, unknown>) => {
     const view = await (await api("team", undefined, cookie)).json();
@@ -133,6 +142,6 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
   assert.equal((await (await fetch(`${baseUrl}/api/v1/catalogue`)).json()).data.length, 0);
   assert.equal((await fetch(`${baseUrl}/api/v1/media/${photoId}`)).status, 404);
   const removed = await fetch(`${baseUrl}/api/agency/media/${privateId}`, { method: "DELETE", headers: { Cookie: cookie, Origin: baseUrl } });
-  assert.equal(removed.status, 200); assert.equal((await api(`media/${privateId}`, undefined, cookie)).status, 404);
+  assert.equal(removed.status, 409); assert.equal((await api(`media/${privateId}`, undefined, cookie)).status, 200);
   assert.ok(!(await (await api("admin/calendar", undefined, cookie)).text()).includes("DEMO"));
 });

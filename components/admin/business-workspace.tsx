@@ -47,13 +47,19 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
 
   useEffect(() => {
     const controller = new AbortController();
+    const updated = () => {
+      void fetch(endpoint, { cache: "no-store", signal: controller.signal }).then(readResponse).then(setState).catch((failure: unknown) => {
+        if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : t("requestFailed"));
+      });
+    };
+    if (production) window.addEventListener("kantara-agency-updated", updated);
     fetch(endpoint, { cache: "no-store", signal: controller.signal }).then(readResponse).then((value) => {
       setState(value); setOwnerId(value.clients.find((client) => client.role === "OWNER")?.id ?? "");
     }).catch((failure: unknown) => {
       if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : t("requestFailed"));
     });
-    return () => controller.abort();
-  }, [t, endpoint]);
+    return () => { controller.abort(); window.removeEventListener("kantara-agency-updated", updated); };
+  }, [t, endpoint, production]);
 
   async function refresh() {
     setBusy(true); setError("");
@@ -70,7 +76,7 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
         body: JSON.stringify({ ...payload, revision: state.revision }),
       }));
       setState(next); form?.reset(); setPropertyIds([]);
-      setNotice(c("saved")); window.dispatchEvent(new Event("kantara-demo-updated"));
+      setNotice(c("saved")); window.dispatchEvent(new Event(production ? "kantara-agency-updated" : "kantara-demo-updated"));
     } catch (failure) { setError(failure instanceof Error ? failure.message : t("requestFailed")); }
     finally { setBusy(false); }
   }
@@ -313,14 +319,14 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
         <h2>{t("receipts")}</h2><div className="business-list">{state.transactions.map((transaction) => <article key={transaction.id}>
           <h3>{propertyName(transaction.propertyId)} · {transaction.closedAt}</h3><p>{t("realized")}: {transaction.commission} USD</p>
           <ul>{transaction.receipts.map((receipt) => <li key={receipt.id}>{receipt.paidAt} · {receipt.amount} USD · {receipt.reference}</li>)}</ul>
-          <form onSubmit={(event) => {
+          {!production && <form onSubmit={(event) => {
             const { form, value } = formValues(event);
             void command({ action: "recordReceipt", transactionId: transaction.id, amount: value("amount"), paidAt: value("paidAt"), reference: value("reference") }, form);
           }}><fieldset disabled={busy}><div className="business-form-grid">
             <Field label={t("amount")}><input name="amount" type="number" min="0.01" max="99999999999.99" step="0.01" required /></Field>
             <Field label={t("paidAt")}><input name="paidAt" type="date" min={transaction.closedAt} max={today()} defaultValue={today()} required /></Field>
             <Field label={t("receiptReference")}><input name="reference" required maxLength={200} /></Field>
-          </div><button type="submit" className="text-button">{t("recordReceipt")}</button></fieldset></form>
+          </div><button type="submit" className="text-button">{t("recordReceipt")}</button></fieldset></form>}
         </article>)}</div>
       </>}
     </>}

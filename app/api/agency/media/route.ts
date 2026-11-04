@@ -4,25 +4,28 @@ import { z } from "zod";
 import { apiHandler } from "@/lib/api/response";
 import { readJson } from "@/lib/api/read-json";
 import { ApiError } from "@/lib/api/errors";
-import { getPrisma } from "@/lib/prisma";
 import { agencyMediaInput } from "@/lib/properties/agency-media";
 import { encryptAgency } from "@/services/agency/crypto";
 import { agencyTransaction } from "@/services/agency/repository";
 import { agencyAccount, guardAgency } from "@/services/agency/session";
 import { requireAdmin } from "@/services/team/domain";
+import { requirePropertyAccess } from "@/services/agency/access";
 export async function GET(request: Request) {
   await connection();
   return apiHandler(async () => {
     guardAgency(request);
-    await agencyTransaction(({ team }) => requireAdmin(agencyAccount(team, request)));
     const propertyId = z.uuid().parse(new URL(request.url).searchParams.get("propertyId"));
-    return { data: await getPrisma().agencyAsset.findMany({ where: { propertyId }, select: { id: true, propertyId: true, kind: true, name: true, mime: true, size: true }, orderBy: { createdAt: "asc" } }) };
+    return { data: await agencyTransaction(async (state, tx) => {
+      const account = agencyAccount(state.team, request);
+      requirePropertyAccess(state, account, propertyId);
+      return tx.agencyAsset.findMany({ where: { propertyId, ...(account.role === "ADMIN" ? {} : { kind: "DOCUMENT" }) },
+        select: { id: true, propertyId: true, kind: true, name: true, mime: true, size: true }, orderBy: { createdAt: "asc" } });
+    }) };
   });
 }
 export function POST(request: Request) {
   return apiHandler(async () => {
     guardAgency(request);
-    await agencyTransaction(({ team }) => requireAdmin(agencyAccount(team, request)));
     const input = agencyMediaInput.parse(await readJson(request, 3600000));
     const bytes = Buffer.from(input.base64, "base64");
     const valid = input.mime === "application/pdf" ? bytes.subarray(0, 5).toString() === "%PDF-"
@@ -32,9 +35,9 @@ export function POST(request: Request) {
       throw new ApiError(400, "VALIDATION_ERROR", "Use a valid JPEG, PNG or PDF up to 2.5 MiB. Photos must be JPEG or PNG.");
     }
     return { data: await agencyTransaction(async (state, tx) => {
-      requireAdmin(agencyAccount(state.team, request));
-      const property = state.business.properties.find((item) => item.id === input.propertyId);
-      if (!property) throw new ApiError(404, "NOT_FOUND", "Property not found.");
+      const account = agencyAccount(state.team, request);
+      const property = requirePropertyAccess(state, account, input.propertyId);
+      if (input.kind === "PHOTO") requireAdmin(account);
       const count = await tx.agencyAsset.count({ where: { propertyId: input.propertyId, kind: input.kind } });
       if (count >= 20) throw new ApiError(409, "MEDIA_LIMIT", "Maximum 20 photos and 20 documents per property.");
       const id = randomUUID();

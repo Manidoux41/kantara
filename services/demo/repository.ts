@@ -10,6 +10,7 @@ import { appointmentInput, leadInput } from "@/lib/validations/crm";
 import { leadStages } from "@/lib/demo/crm-types";
 import { createBusinessState } from "./business";
 import { createCrmState } from "./crm";
+import { bankTransferSchema, dossierClosureSchema, dossierDocumentSchema } from "@/lib/agency/dossiers";
 
 const clientSchema = clientInput.extend({ id: z.string() });
 const propertySchema = businessPropertyInput.extend({
@@ -26,7 +27,10 @@ export const businessStateSchema = z.strictObject({
   transactions: z.array(z.strictObject({
     id: z.string(), contractId: z.string(), propertyId: z.string(), closedAt: z.iso.date(), commission: demoMoney,
     receipts: z.array(z.strictObject({ id: z.string(), amount: demoMoney, paidAt: z.iso.date(), reference: z.string() })).max(100),
+    dossierClosure: dossierClosureSchema.optional(),
   })).max(100),
+  dossierDocuments: z.array(dossierDocumentSchema).max(300).optional(),
+  bankTransfers: z.array(bankTransferSchema).max(300).optional(),
   agents: z.array(z.strictObject({ id: z.string(), name: z.string(), active: z.boolean(), workdays: z.array(z.number().int().min(0).max(6)), startMinute: z.number(), endMinute: z.number() })).max(50),
   leads: z.array(leadInput.extend({ id: z.string(), stage: z.enum(leadStages), lostReason: z.string(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime() })).max(200),
   appointments: z.array(appointmentInput.safeExtend({

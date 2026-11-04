@@ -28,6 +28,7 @@ export function POST(request: Request) {
     const command = details ? null : businessCommandSchema.parse(raw);
     return { data: await agencyTransaction((state) => {
       const account = agencyAccount(state.team, request); requireAdmin(account);
+      if (command?.action === "recordReceipt") throw new ApiError(409, "BANK_RECONCILIATION_REQUIRED", "Submit a bank transfer with proof in the property dossier, then have an administrator confirm receipt.");
       if (details) {
         if (state.business.revision !== details.revision) throw new ApiError(409, "REVISION_CONFLICT", "The agency changed. Refresh and retry.");
         const property = state.business.properties.find((item) => item.id === details.propertyId);

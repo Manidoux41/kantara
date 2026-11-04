@@ -71,7 +71,10 @@ export function TeamWorkspace({ locale, production = false, onAccount }: {
         throw new Error(payload.error?.message ?? t.error);
       }
       if (input.action === "logout") { setView(null); onAccount?.(null); setSelected(""); setTab("properties"); }
-      else { await refresh(); after?.(); setNotice(t.success); }
+      else {
+        await refresh(); after?.(); setNotice(t.success);
+        if (production) window.dispatchEvent(new Event("kantara-agency-updated"));
+      }
     } catch (cause) { setError(cause instanceof Error ? cause.message : t.error); }
     finally { setBusy(false); }
   }

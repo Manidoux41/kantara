@@ -1,5 +1,7 @@
 import type { DemoProperty } from "./properties";
 import type { ContactProfile, CrmState } from "./crm-types";
+import type { BankTransfer, DossierDocument, dossierClosureSchema } from "@/lib/agency/dossiers";
+import type { z } from "zod";
 
 export type ClientRole = "OWNER" | "BUYER" | "TENANT";
 export type BusinessClient = {
@@ -30,10 +32,13 @@ export type BusinessContract = {
 export type BusinessTransaction = {
   id: string; contractId: string; propertyId: string; closedAt: string;
   commission: string; receipts: { id: string; amount: string; paidAt: string; reference: string }[];
+  dossierClosure?: z.infer<typeof dossierClosureSchema>;
 };
 export type BusinessState = CrmState & {
   revision: number; clients: BusinessClient[]; properties: BusinessProperty[];
   contracts: BusinessContract[]; transactions: BusinessTransaction[];
+  dossierDocuments?: DossierDocument[];
+  bankTransfers?: BankTransfer[];
 };
 export type RevenueSummary = {
   expected: string; realized: string; received: string; outstanding: string;

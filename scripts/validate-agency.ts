@@ -34,7 +34,7 @@ async function stop(child: ChildProcess) {
 async function verifyPdfTraces() {
   const directory = await mkdtemp(join(tmpdir(), "kantara-pdf-trace-"));
   try {
-    for (const route of ["team/employment/[id]", "admin/contracts/[id]/pdf"]) {
+    for (const route of ["team/employment/[id]", "admin/contracts/[id]/pdf", "dossiers/documents/[id]/pdf"]) {
       const tracePath = resolve(dist, "server/app/api/agency", route, "route.js.nft.json");
       const trace: { files: string[] } = JSON.parse(await readFile(tracePath, "utf8"));
       const files = trace.files.map((file) => resolve(dirname(tracePath), file));
@@ -91,7 +91,7 @@ async function main() {
     }
     if (!ready) throw new Error("Validation startup timed out.");
     await command(process.execPath, ["node_modules/tsx/dist/cli.mjs", "--test", "--test-concurrency=1",
-      "tests/http/agency-auth.test.ts", "tests/http/agency-business.test.ts", "tests/http/agency-browser.test.ts"]);
+      "tests/http/agency-auth.test.ts", "tests/http/agency-business.test.ts", "tests/http/agency-dossiers.test.ts", "tests/http/agency-browser.test.ts"]);
     console.log("Production agency validation passed; all test data will be removed.");
   } catch (error) {
     if (serverLog) console.error(serverLog);

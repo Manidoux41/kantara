@@ -104,6 +104,44 @@ not silently rewritten.
 The Linux/Vercel binary cannot be executed on macOS; verify a PDF after the
 first Vercel deployment.
 
+### Property dossiers and bank reconciliation
+
+The production workspace includes a seven-language dossier panel for administrators
+and each property's **currently assigned agent**. Link the owner and buyer/tenant
+in Clients first. Both roles can save immutable EN–KM documents and download
+residential leases, sale agreements, preliminary sale agreements, deposit
+acknowledgements, handover records and commission statements. Enter the actual
+agency identity, title details, dates, amounts and agreed English/Khmer clauses;
+there is no automatic translation. These are models for Cambodian professional
+review, not certified instruments or automatic ownership transfers. Lease terms
+of 15 years or more require a separate legal process.
+
+Both roles can upload/download private title documents, signed agreements and
+bank proof (JPEG/PNG/PDF, 2.5 MiB, 20 private files per property). Reassignment
+revokes the former agent's access to historical documents, files and transfers.
+Only administrators publish photos, delete files or close a sale/lease. Closure
+records the administrator, timestamp and explicit external-signature, legal-review
+and applicable-formality confirmations. It marks the property sold/rented and
+realizes the declared commission in the CRM.
+
+Payments happen **outside** this application. The agent or administrator submits
+amount, date, bank, payer, bank reference and an uploaded proof for a closed
+transaction. Only an administrator can confirm receipt after checking the bank
+statement, or reject with a note. Pending transfers reserve the remaining commission
+but do not count as received. Approval creates one CRM receipt atomically; duplicate
+references/evidence, overpayments and repeat approval are rejected. Evidence already
+used by any submission cannot be deleted. No bank API, money movement, bank-account
+ownership verification, certified accounting or tax invoicing is provided.
+The old production manual-receipt command is blocked; use reconciliation instead.
+
+Endpoints: authenticated `GET/POST /api/agency/dossiers`,
+`GET /api/agency/dossiers/documents/{id}/pdf`, and existing scoped
+`/api/agency/media` routes. Document/transfer arrays and closure confirmations
+are optional backward-compatible fields in the encrypted aggregate; this feature
+requires no additional SQL migration. Existing records are preserved.
+The generic database/legal-preparation footer notice is omitted in production;
+the information pages and document-specific legal/formality guidance remain.
+
 The connected internal agenda persists in PostgreSQL with Cambodia time and
 authenticated, one-way ICS export. It is **not** bidirectional Google/Microsoft
 calendar sync. Email contact requests still require the Resend verified sender,

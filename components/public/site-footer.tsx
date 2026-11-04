@@ -21,7 +21,7 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
           {informationTopics.map((topic) => <Link key={topic} href={`/${locale}/information/${topic}`} prefetch={true}>{legal[topic]}<Icon name="arrow" /></Link>)}
         </nav>
       </div>
-      <p className="footer-disclaimer">{legal.notice}</p>
+      {!agencyEnabled() && <p className="footer-disclaimer">{legal.notice}</p>}
       <div className="footer-inner">
         <p>{p("footerNotice")}</p>
         {agencyEnabled() ? <Link className="text-link" href={`/${locale}/admin`}>Administration<Icon name="arrow" /></Link> : <>
