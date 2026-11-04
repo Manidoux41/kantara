@@ -4,6 +4,12 @@ import type { PropertyQuery } from "@/lib/validations/properties";
 import { ApiError } from "@/lib/api/errors";
 import { getPrisma } from "@/lib/prisma";
 import { buildPublicPropertyQuery, publicPropertySelect, publicPropertyWhere } from "./public-query";
+import { publicFurnishing } from "@/lib/properties/furnishing";
+
+function presentProperty<T extends { agencyDetails: unknown; furnished: boolean }>(row: T) {
+  const { agencyDetails, ...property } = row;
+  return { ...property, furnishing: publicFurnishing(agencyDetails, row.furnished) };
+}
 
 export async function listPublicProperties(query: PropertyQuery) {
   const prisma = getPrisma();
@@ -14,7 +20,7 @@ export async function listPublicProperties(query: PropertyQuery) {
   ], { isolationLevel: "RepeatableRead" });
 
   return {
-    data,
+    data: data.map(presentProperty),
     meta: {
       page: query.page,
       pageSize: query.pageSize,
@@ -32,5 +38,5 @@ export async function getPublicProperty(slug: string, locale: Locale) {
     select: publicPropertySelect(locale),
   });
   if (!data) throw new ApiError(404, "NOT_FOUND", "Property not found.");
-  return { data };
+  return { data: presentProperty(data) };
 }

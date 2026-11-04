@@ -19,6 +19,7 @@ export function publicPropertySelect(locale: PropertyQuery["locale"]) {
     bathrooms: true,
     rooms: true,
     furnished: true,
+    agencyDetails: true,
     publishedAt: true,
     location: { select: { id: true, name: true } },
     features: { select: { key: true }, orderBy: { key: "asc" } },

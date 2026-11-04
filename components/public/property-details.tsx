@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -10,10 +9,13 @@ import type { Locale } from "@/lib/i18n/routing";
 import type { CatalogueProperty } from "@/lib/properties/presentation";
 import { PropertyMap } from "./property-map";
 import { PropertyInquiry } from "./property-inquiry";
+import { PropertyGallery } from "./property-gallery";
+import { propertyEditorMessages } from "@/lib/i18n/property-editor";
 
 export function PropertyDetails({ id, initial, initialPrice, locale, production = false }: { id: string; initial: CatalogueProperty | null; initialPrice: string; locale: Locale; production?: boolean }) {
   const t = useTranslations("Preview"), tools = useTranslations("PropertyTools"), b = useTranslations("Business");
   const copy = propertyMessages(locale);
+  const editor = propertyEditorMessages(locale);
   const [property, setProperty] = useState(initial);
   const [price, setPrice] = useState(initialPrice);
   const [error, setError] = useState("");
@@ -48,12 +50,8 @@ export function PropertyDetails({ id, initial, initialPrice, locale, production 
           <p>{b(property.availability ?? "AVAILABLE")}</p><a className="button button-dark" href="#contact-agent">{copy.contact}</a></div>
       </div>
       {!production && <p className="information-notice">{copy.demo}</p>}
-      <Image className="property-detail-image" src={property.image} unoptimized={production} alt={title} width={1200} height={1000} sizes="(max-width: 760px) 100vw, 85vw" preload />
-      {property.images && property.images.length > 1 && <div className="property-photo-gallery">
-        {property.images.slice(1).map((src, index) => <a href={src} target="_blank" rel="noreferrer" key={src}>
-          <Image src={src} unoptimized={production} alt={`${title} · ${index + 2}`} width={480} height={360} sizes="(max-width: 760px) 50vw, 25vw" />
-        </a>)}
-      </div>}
+      <PropertyGallery key={[property.id, property.image, ...(property.images ?? [])].join(",")} images={property.images?.length ? property.images : [property.image]}
+        title={title} locale={locale} unoptimized={production} />
       <div className="property-detail-layout"><article>
         <h2>{copy.overview}</h2>
         <p>{original ? t(`properties.${original.key}.description`) : "description" in property ? property.description : "address" in property ? property.address : ""}</p>
@@ -62,6 +60,7 @@ export function PropertyDetails({ id, initial, initialPrice, locale, production 
           <div><dt>{t("bathroomsLabel")}</dt><dd>{property.bathrooms}</dd></div>
           <div><dt>{t("areaLabel")}</dt><dd>{property.area} m²</dd></div>
           <div><dt>{tools("rooms")}</dt><dd>{property.rooms}</dd></div>
+          <div><dt>{editor.furnishing}</dt><dd>{property.furnishing ? editor[property.furnishing] : editor.unspecified}</dd></div>
         </dl>
         {property.publishedAt && <p>{b("publicationDate")} : <time dateTime={property.publishedAt}>{property.publishedAt.slice(0, 10)}</time></p>}
         <h2>{copy.surroundings}</h2><p>{copy.locationHelp}</p>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { demoLocations, demoTypes } from "@/lib/demo/properties";
 import { contactProfileInput, crmCommands } from "./crm";
+import { furnishingSchema } from "@/lib/properties/furnishing";
 
 const text = z.string().trim().min(1).max(200);
 const terms = z.string().trim().min(10).max(4000);
@@ -16,6 +17,7 @@ export const clientInput = z.strictObject({
   profile: contactProfileInput.optional(),
 });
 export const businessPropertyInput = z.strictObject({
+  furnishing: furnishingSchema.optional(),
   title: text, address: text, titleReference: text, ownerId: id,
   location: z.enum(demoLocations), type: z.enum(demoTypes), transaction: z.enum(["sale", "rent"]),
   price: demoMoney.refine((value) => Number(value) > 0),

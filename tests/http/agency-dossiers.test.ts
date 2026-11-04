@@ -89,7 +89,7 @@ test("dossiers production: assigned-agent bilingual PDF, private title files, ba
   try {
     const errors: string[] = [];
     async function authenticatedPage(value: string) {
-      const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
       await context.addCookies([{ name: value.split("=")[0], value: value.slice(value.indexOf("=") + 1), url: `${baseUrl}/api/agency/`, httpOnly: true, sameSite: "Strict" }]);
       const page = await context.newPage(); page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(`${baseUrl}/fr/admin`); await page.locator(".dossier-document-form").waitFor();

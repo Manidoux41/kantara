@@ -34,6 +34,7 @@ export function POST(request: Request) {
         const property = state.business.properties.find((item) => item.id === details.propertyId);
         if (!property) throw new ApiError(404, "NOT_FOUND", "Property not found.");
         property.description = details.description;
+        if (details.furnishing !== undefined) property.furnishing = details.furnishing;
         property.coordinates = details.coordinates ?? undefined;
         state.business.revision++;
       } else if (command) state.business = executeBusinessCommand(state.business, command);

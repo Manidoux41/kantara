@@ -21,8 +21,10 @@ export async function syncPublicProperties(tx: Prisma.TransactionClient, state: 
       salePrice: property.transaction === "sale" ? property.price : null,
       rentalPrice: property.transaction === "rent" ? property.price : null,
       livingArea: property.area, bedrooms: property.bedrooms, bathrooms: property.bathrooms, rooms: property.rooms,
+      furnished: property.furnishing === "FURNISHED",
       ownerId: property.ownerId, locationId: location.id, publishedAt: property.publishedAt ? new Date(property.publishedAt) : null,
-      agencyDetails: { address: property.address, ...(property.coordinates ? { coordinates: property.coordinates } : {}) } };
+      agencyDetails: { address: property.address, ...(property.furnishing ? { furnishing: property.furnishing } : {}),
+        ...(property.coordinates ? { coordinates: property.coordinates } : {}) } };
     await tx.property.upsert({ where: { id: property.id }, create: { id: property.id, ...data }, update: data });
     // The source language is explicit; missing translations are not machine-invented.
     for (const locale of ["en", "fr", "km", "zh", "ja", "de", "es"] as Locale[]) {

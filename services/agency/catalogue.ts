@@ -3,11 +3,12 @@ import { getPrisma } from "@/lib/prisma";
 import type { CatalogueProperty } from "@/lib/properties/presentation";
 import { z } from "zod";
 import { ApiError } from "@/lib/api/errors";
+import { publicFurnishing } from "@/lib/properties/furnishing";
 const city = z.enum(["siem-reap", "phnom-penh", "kampot"]);
 export async function agencyCatalogue(): Promise<CatalogueProperty[]> {
   const rows = await getPrisma().property.findMany({ where: { status: "PUBLISHED", deletedAt: null },
     select: { id: true, type: true, transactionType: true, availability: true, livingArea: true, bedrooms: true, bathrooms: true, rooms: true,
-      salePrice: true, rentalPrice: true, publishedAt: true, location: { select: { name: true } },
+      salePrice: true, rentalPrice: true, furnished: true, publishedAt: true, location: { select: { name: true } },
       translations: { where: { locale: "en", published: true }, select: { title: true, description: true } },
       images: { orderBy: { position: "asc" }, select: { url: true } }, agencyDetails: true },
     orderBy: [{ publishedAt: "desc" }, { id: "asc" }], take: 100 });
@@ -17,6 +18,7 @@ export async function agencyCatalogue(): Promise<CatalogueProperty[]> {
     if (!row.translations[0]) throw new ApiError(503, "CATALOGUE_STORAGE", "Published property translation is missing.");
     return { id: row.id, title: row.translations[0].title, description: row.translations[0].description,
       address: details.address, coordinates: details.coordinates, location: city.parse(row.location.name),
+      furnishing: publicFurnishing(row.agencyDetails, row.furnished),
       transaction: row.transactionType === "SALE" ? "sale" : "rent", type,
       price: Number(row.transactionType === "SALE" ? row.salePrice : row.rentalPrice),
       area: Number(row.livingArea), bedrooms: row.bedrooms ?? 0, bathrooms: row.bathrooms ?? 0, rooms: row.rooms ?? 0,

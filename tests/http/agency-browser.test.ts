@@ -8,7 +8,7 @@ import { locales } from "../../lib/i18n/routing";
 test("browser production: real login, dashboard, persisted client, empty real catalogue, logout and no demo login", { skip: !enabled, timeout: 120000 }, async () => {
   const browser = await chromium.launch({ executablePath: process.env.PDF_CHROMIUM_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
   try {
-    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
     const errors: string[] = []; page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`${baseUrl}/fr/admin`);
     const login = page.locator(".team-login");
@@ -32,6 +32,7 @@ test("browser production: real login, dashboard, persisted client, empty real ca
     await page.locator(".business-tabs").waitFor();
     assert.doesNotMatch(await page.locator("body").innerText(), /\bficti\w*|\bdemo\b|démonstration|brouillon/iu);
     assert.equal(await page.locator(".business-tabs").evaluate((element) => getComputedStyle(element).display), "flex");
+    await page.locator(".business-kpis").first().waitFor();
     const kpiDisplays = await page.locator(".business-kpis").evaluateAll((elements) =>
       elements.map((element) => getComputedStyle(element).display));
     assert.ok(kpiDisplays.length > 0 && kpiDisplays.every((display) => display === "grid"));

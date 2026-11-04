@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { BusinessState, BusinessProperty, ContractKind, RevenueSummary } from "@/lib/demo/business-types";
 import { demoLocations, demoTypes, filterDemoProperties, initialDemoFilters, type DemoFilters } from "@/lib/demo/properties";
 import { contractLegalSources } from "@/lib/demo/contract-document";
@@ -10,6 +10,10 @@ import { ActivityWorkspace, CalendarWorkspace, ContactDetails, CrmDashboard, Lea
 import type { CrmSummary } from "@/lib/demo/crm-types";
 import { Icon } from "@/components/public/icon";
 import { AgencyMedia } from "./agency-media";
+import { furnishingLevels } from "@/lib/properties/furnishing";
+import { propertyEditorMessages } from "@/lib/i18n/property-editor";
+import { locales } from "@/lib/i18n/routing";
+import { PropertyPhotoPicker, uploadPropertyPhoto, usePhotoSelection } from "./property-photo-picker";
 
 type Snapshot = BusinessState & { revenue: RevenueSummary; crm: CrmSummary; storage: string };
 export type BusinessTab = "overview" | "clients" | "properties" | "contracts" | "finance" | "leads" | "calendar" | "activity";
@@ -34,6 +38,9 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
   const c = useTranslations("Crm");
   const p = useTranslations("Preview");
   const ui = useTranslations("Interface");
+  const locale = useLocale(), editor = propertyEditorMessages(locales.find((item) => item === locale) ?? "en");
+  const selection = usePhotoSelection();
+  const [pendingPhotosFor, setPendingPhotosFor] = useState<string | null>(null);
   const [state, setState] = useState<Snapshot | null>(null);
   const [tab, setTab] = useState<BusinessTab>(initialTab);
   const [contactSearch, setContactSearch] = useState("");
@@ -67,7 +74,7 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
     catch (failure) { setError(failure instanceof Error ? failure.message : t("requestFailed")); }
     finally { setBusy(false); }
   }
-  async function command(payload: Record<string, unknown>, form?: HTMLFormElement) {
+  async function command(payload: Record<string, unknown>, form?: HTMLFormElement, afterSave?: (next: Snapshot) => Promise<void>) {
     if (!state || busy) return;
     setBusy(true); setError(""); setNotice("");
     try {
@@ -76,9 +83,24 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
         body: JSON.stringify({ ...payload, revision: state.revision }),
       }));
       setState(next); form?.reset(); setPropertyIds([]);
+      if (afterSave) await afterSave(next);
       setNotice(c("saved")); window.dispatchEvent(new Event(production ? "kantara-agency-updated" : "kantara-demo-updated"));
     } catch (failure) { setError(failure instanceof Error ? failure.message : t("requestFailed")); }
     finally { setBusy(false); }
+  }
+  async function saveNewPhotos(propertyId: string) {
+    const selected = [...selection.photos];
+    try {
+      for (const [index, photo] of selected.entries()) {
+        await uploadPropertyPhoto(propertyId, photo.file, t("requestFailed"));
+        selection.replace(selected.slice(index + 1));
+      }
+      setPendingPhotosFor(null);
+    } finally {
+      const next = await readResponse(await fetch(endpoint, { cache: "no-store" }));
+      setState(next);
+      window.dispatchEvent(new Event("kantara-agency-updated"));
+    }
   }
   function formValues(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -203,13 +225,20 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
         </article>)}</div>
       </>}
       {tab === "properties" && <>
-        <form className="business-form" onSubmit={(event) => {
+        <form className="business-form new-property-form" onSubmit={(event) => {
           const { form, value } = formValues(event);
+          if (pendingPhotosFor) return;
           void command({ action: "createProperty", input: {
             title: value("title"), address: value("address"), titleReference: value("titleReference"), ownerId: value("ownerId"),
             location: value("location"), type: value("type"), transaction: value("transaction"), price: value("price"),
             area: Number(value("area")), bedrooms: Number(value("bedrooms")), rooms: Number(value("rooms")), bathrooms: Number(value("bathrooms")),
-          } }, form);
+            furnishing: value("furnishing"),
+          } }, form, production && selection.photos.length ? async (next) => {
+            const propertyId = next.properties.at(-1)!.id;
+            setPendingPhotosFor(propertyId);
+            try { await saveNewPhotos(propertyId); }
+            catch (cause) { throw new Error(`${editor.uploadFailed} ${cause instanceof Error ? cause.message : t("requestFailed")}`); }
+          } : undefined);
         }}>
           <h2>{t("newProperty")}</h2><fieldset disabled={busy}><div className="business-form-grid">
             <Field label={t("propertyTitle")}><input name="title" required maxLength={200} /></Field>
@@ -220,10 +249,21 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
             <Field label={p("typeLabel")}><select name="type">{demoTypes.map((type) => <option key={type} value={type}>{p(`types.${type}`)}</option>)}</select></Field>
             <Field label={p("transactionLabel")}><select name="transaction"><option value="sale">{p("sale")}</option><option value="rent">{p("rent")}</option></select></Field>
             <Field label={t("price")}><input name="price" type="number" min="0.01" max="99999999999.99" step="0.01" required /></Field>
+            <Field label={editor.furnishing}><select name="furnishing" required defaultValue="UNFURNISHED">
+              {furnishingLevels.map((value) => <option key={value} value={value}>{editor[value]}</option>)}
+            </select></Field>
             {(["area", "bedrooms", "rooms", "bathrooms"] as const).map((key) => <Field label={t(key)} key={key}>
               <input name={key} type="number" min={key === "area" ? "0.01" : "0"} max={key === "area" ? "10000000" : "100"} step={key === "area" ? "0.01" : "1"} required />
             </Field>)}
-          </div><button type="submit" className="button button-dark">{t("createProperty")}</button></fieldset>
+          </div>
+            {production && <PropertyPhotoPicker selection={selection} disabled={busy} onError={setError} />}
+            <button type="submit" className="button button-dark" disabled={Boolean(pendingPhotosFor)}>{t("createProperty")}</button>
+            {pendingPhotosFor && <button type="button" className="text-button" onClick={() => {
+              setBusy(true); setError("");
+              void saveNewPhotos(pendingPhotosFor).catch((cause: unknown) => setError(`${editor.uploadFailed} ${cause instanceof Error ? cause.message : t("requestFailed")}`))
+                .finally(() => { setBusy(false); window.dispatchEvent(new Event("kantara-agency-updated")); });
+            }}>{editor.uploadPhotos}</button>}
+          </fieldset>
         </form>
         <PropertyFilters onApply={setPropertyFilters} includePublication />
         <div className="business-list">{properties.map((property) => <article key={property.id}>
@@ -231,6 +271,7 @@ export function BusinessWorkspace({ initialTab = "overview", production = false,
           <h3>{property.title}</h3><p>{property.id} · {clientName(property.ownerId)}</p>
           <div className="business-badges"><span>{t(property.availability)}</span><span>{t(property.publication)}</span></div>
           <p>{property.price} USD{property.transaction === "rent" ? p("perMonth") : ""} · {property.area} m² · {property.bedrooms} {t("bedrooms")} · {property.rooms} {t("rooms")}</p>
+          <p>{editor.furnishing}: {property.furnishing ? editor[property.furnishing] : editor.unspecified}</p>
           <p>{t("publicationDate")}: {property.publishedAt?.slice(0, 10) ?? t("none")}</p>
           <button type="button" disabled={busy} className="text-button" onClick={() => void command({
             action: "publish", propertyId: property.id, published: property.publication !== "PUBLISHED",

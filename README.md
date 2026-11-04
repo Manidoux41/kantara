@@ -60,8 +60,26 @@ no fictitious position is assigned to a real property.
 Property photos and private documents persist as encrypted `AgencyAsset`
 payloads in PostgreSQL. Maximum **20 photos and 20 documents per property**,
 JPEG/PNG/PDF, **2.5 MiB per file** (compatible with Vercel request-body limits).
-Only published property photos are public. Property documents and hiring
-documents require administrator authentication and are served as attachments,
+Only published property photos are public. Administrators can upload multiple
+JPEG/PNG photos directly in the new-property form or add more to an existing
+property, within the same 20-photo limit. A selected cover is persisted as the
+first image and used in listings and property details. Deleting the cover promotes
+the next photo. Draft photos have administrator-only, non-cached previews.
+Uploads use one bounded request per file. If a batch partially fails, saved
+photos remain and the remaining selection can be retried without recreating
+the property. Public galleries support previous/next buttons, thumbnails,
+left/right keys and touch swipes; they do not auto-advance.
+
+Property creation and editing support furnished, unfurnished and partially
+furnished. Existing records without a declared level remain unspecified.
+The value persists in the encrypted aggregate and the public `agencyDetails`
+JSON projection, so no SQL migration is required. Public property APIs return
+`furnishing` as `FURNISHED`, `UNFURNISHED`, `PARTIALLY_FURNISHED` or `null` for
+an undeclared level; the legacy `furnished` boolean remains true only for fully
+furnished properties. Internal projection JSON is not returned by the public API.
+
+Property documents require administrator or currently assigned-agent authentication;
+hiring documents require an administrator. Downloads are served as attachments,
 never through public storage URLs. Hiring images also have an authenticated,
 non-cached inline preview in the candidate dossier; PDFs remain downloads.
 No antivirus scanning is supplied; accept

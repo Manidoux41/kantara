@@ -233,6 +233,14 @@
 .business-entry { margin: 20px 0; }
 .admin-deployment-notice { padding: 16px 20px; background: var(--accent-soft); color: var(--accent); border-inline-start: 3px solid var(--accent); font-size: 12px; line-height: 1.8; }
 .business-workspace { min-width: 0; }
+.property-editor-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 14px; list-style: none; padding: 0; }
+.property-editor-photos li { display: grid; align-content: start; gap: 8px; padding: 10px; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); }
+.property-editor-photos img { width: 100%; height: auto; aspect-ratio: 4/3; object-fit: cover; }
+.property-editor-photos span { font-size: 12px; overflow-wrap: anywhere; }
+.property-editor-photos strong { font-size: 12px; color: var(--accent); }
+.property-photo-picker h3 { font-family: var(--serif); font-weight: 400; }
+.property-photo-picker h3 small { font-family: var(--font-sans), sans-serif; font-size: 12px; white-space: nowrap; }
+.property-photo-picker { min-width: 0; }
 .business-notice { padding: 20px; margin-bottom: 20px; background: var(--sun-soft); color: var(--foreground); border: 1px solid var(--sun); border-radius: var(--radius); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
 .business-notice a { text-decoration: underline; }
 .business-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }

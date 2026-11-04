@@ -16,6 +16,7 @@ export type DemoProperty = {
   availability?: "AVAILABLE" | "SOLD" | "RENTED";
   publication?: "DRAFT" | "PUBLISHED";
   publishedAt?: string | null;
+  furnishing?: Furnishing | null;
 };
 
 // UI-only fixtures. Never used as a fallback for the PostgreSQL-backed API.
@@ -100,3 +101,4 @@ export function filterDemoProperties(filters: DemoFilters, source: readonly Demo
       : (a[field] - b[field]) * direction)
     || a.id.localeCompare(b.id));
 }
+import type { Furnishing } from "@/lib/properties/furnishing";

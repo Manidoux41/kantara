@@ -37,7 +37,7 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
   let photoId = "";
   for (let index = 0; index < 21; index++) {
     const response = await api("media", { propertyId, kind: "PHOTO", name: `validation-${index}.png`, mime: testIdentity.mime, base64: testIdentity.base64 }, cookie);
-    assert.equal(response.status, index < 20 ? 200 : 409);
+    assert.equal(response.status, index < 20 ? 200 : 409, `Photo ${index + 1}: ${response.ok ? "unexpected status" : await response.clone().text()}`);
     if (!index) photoId = (await response.json()).data.id;
   }
   assert.equal((await fetch(`${baseUrl}/api/v1/media/${photoId}`)).status, 404);
@@ -58,7 +58,7 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
     await page.goto(`${baseUrl}/fr/properties/${propertyId}`);
     await page.getByRole("heading", { name: "VALIDATION PROPERTY", exact: true }).waitFor();
     await page.locator("#contact-agent").waitFor();
-    assert.equal(await page.locator(".property-photo-gallery img").count(), 19);
+    assert.equal(await page.locator(".property-photo-gallery img").count(), 20);
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
   const revision = state.revision;

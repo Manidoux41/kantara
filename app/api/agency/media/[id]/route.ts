@@ -10,6 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   let download: Response | undefined;
   const response = await apiHandler(async () => {
     guardAgency(request);
+    const preview = new URL(request.url).searchParams.get("preview") === "1";
     const { id } = await params;
     const asset = await agencyTransaction(async (state, tx) => {
       const account = agencyAccount(state.team, request);
@@ -21,11 +22,34 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
     const { base64 } = z.object({ base64: z.string() }).parse(decryptAgency(asset.payload));
     download = new Response(Buffer.from(base64, "base64"), { headers: { "Content-Type": asset.mime,
-      "Content-Disposition": `attachment; filename="kantara-${asset.id}.${asset.mime === "application/pdf" ? "pdf" : asset.mime === "image/png" ? "png" : "jpg"}"`,
+      "Content-Disposition": `${preview && asset.mime.startsWith("image/") ? "inline" : "attachment"}; filename="kantara-${asset.id}.${asset.mime === "application/pdf" ? "pdf" : asset.mime === "image/png" ? "png" : "jpg"}"`,
       "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox; default-src 'none'" } });
     return { data: null };
   });
   return download ?? response;
+}
+export function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return apiHandler(async () => {
+    guardAgency(request);
+    const { id } = await params;
+    return { data: await agencyTransaction(async (state, tx) => {
+      const account = agencyAccount(state.team, request);
+      requireAdmin(account);
+      const asset = await tx.agencyAsset.findUnique({ where: { id: z.uuid().parse(id) } });
+      if (!asset || asset.kind !== "PHOTO") throw new ApiError(404, "NOT_FOUND", "Property photo not found.");
+      const property = requirePropertyAccess(state, account, asset.propertyId);
+      const images = await tx.propertyImage.findMany({ where: { propertyId: property.id }, orderBy: [{ position: "asc" }, { id: "asc" }] });
+      const cover = images.find((image) => image.url === `/api/v1/media/${id}`);
+      if (!cover) throw new ApiError(503, "AGENCY_STORAGE", "Property photo linkage is inconsistent.");
+      const ordered = [cover, ...images.filter((image) => image.id !== cover.id)];
+      for (const [position, image] of ordered.entries()) {
+        await tx.propertyImage.update({ where: { id: image.id }, data: { position } });
+      }
+      property.image = cover.url;
+      state.business.revision++;
+      return { id, featured: true };
+    }, true) };
+  });
 }
 export function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return apiHandler(async () => {
