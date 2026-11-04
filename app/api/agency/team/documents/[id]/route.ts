@@ -13,8 +13,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       if (!item) throw new ApiError(404, "NOT_FOUND", "Document not found.");
       return item;
     });
+    const inline = new URL(request.url).searchParams.get("preview") === "1" && document.mime.startsWith("image/");
     download = new Response(Buffer.from(document.base64, "base64"), { headers: {
-      "Content-Type": document.mime, "Content-Disposition": `attachment; filename="hiring-${document.id}.${document.mime === "application/pdf" ? "pdf" : document.mime === "image/png" ? "png" : "jpg"}"`,
+      "Content-Type": document.mime, "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="hiring-${document.id}.${document.mime === "application/pdf" ? "pdf" : document.mime === "image/png" ? "png" : "jpg"}"`,
       "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox; default-src 'none'",
     } }); return { data: null };
   });

@@ -67,10 +67,24 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
   let team = await run({ action: "candidate", input: { name: "VALIDATION AGENT", address: "VALIDATION", identityReference: "TEST-AGENT-ID" } });
   const candidate = team.candidates.at(-1);
   team = await run({ action: "upload", candidateId: candidate.id, input: testIdentity });
+  const documentId = team.candidates.at(-1).documents[0].id;
+  assert.equal((await api(`team/documents/${documentId}?preview=1`)).status, 401);
+  const preview = await api(`team/documents/${documentId}?preview=1`, undefined, cookie);
+  assert.equal(preview.status, 200);
+  assert.equal(preview.headers.get("content-type"), "image/png");
+  assert.ok(preview.headers.get("content-disposition")?.startsWith("inline;"));
+  assert.equal(preview.headers.get("cache-control"), "no-store");
+  assert.deepEqual(Buffer.from(await preview.arrayBuffer()), Buffer.from(testIdentity.base64, "base64"));
+  const attachment = await api(`team/documents/${documentId}`, undefined, cookie);
+  assert.ok(attachment.headers.get("content-disposition")?.startsWith("attachment;"));
   await run({ action: "review", candidateId: candidate.id, documentId: team.candidates.at(-1).documents[0].id, approved: true });
   team = await run({ action: "contract", candidateId: candidate.id, input: { ...employmentExample, startDate: today } });
   const employmentId = team.candidates.at(-1).contract.id;
-  assert.equal((await api(`team/employment/${candidate.id}`, undefined, cookie)).status, 200);
+  assert.equal((await api(`team/employment/${candidate.id}`)).status, 401);
+  const employmentPdf = await api(`team/employment/${candidate.id}`, undefined, cookie);
+  assert.equal(employmentPdf.status, 200);
+  assert.equal(employmentPdf.headers.get("content-type"), "application/pdf");
+  assert.equal(Buffer.from(await employmentPdf.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
   await run({ action: "activate", candidateId: candidate.id, contractId: employmentId, login: "validation.agent", temporaryPassword: testAgentPassword,
     signedOn: today, legalReviewConfirmed: true, signatureConfirmed: true });
   team = await run({ action: "assignProperty", propertyId, agentId: candidate.agentId });
@@ -87,6 +101,8 @@ test("production business: PostgreSQL CRUD, documents, 20-photo limit, publicati
   assert.equal((await api("admin", undefined, agentCookie)).status, 403);
   const changed = await api("team", { action: "changePassword", currentPassword: testAgentPassword, password: `${testAgentPassword}-changed` }, agentCookie);
   assert.equal(changed.status, 200); const changedCookie = changed.headers.get("set-cookie")!.split(";")[0];
+  assert.equal((await api(`team/documents/${documentId}?preview=1`, undefined, changedCookie)).status, 403);
+  assert.equal((await api(`team/employment/${candidate.id}`, undefined, changedCookie)).status, 403);
   assert.equal((await api("admin", { action: "publish", revision: 0, propertyId, published: false }, changedCookie)).status, 403);
   const agentBusiness = await business(changedCookie); assert.equal(agentBusiness.properties.length, 1);
   assert.equal(agentBusiness.clients.length, 1); assert.equal(agentBusiness.clients[0].identityReference, "");

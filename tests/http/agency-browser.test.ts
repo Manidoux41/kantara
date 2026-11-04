@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { chromium } from "playwright-core";
 import { baseUrl, enabled } from "../helpers/agency-http";
+import { testIdentity } from "../helpers/team-fixtures";
+import { employmentExample } from "../../lib/team/examples";
 test("browser production: real login, dashboard, persisted client, empty real catalogue, logout and no demo login", { skip: !enabled, timeout: 120000 }, async () => {
   const browser = await chromium.launch({ executablePath: process.env.PDF_CHROMIUM_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
   try {
@@ -39,6 +41,50 @@ test("browser production: real login, dashboard, persisted client, empty real ca
     await form.locator('[name="nationality"]').fill("TEST");
     await form.getByRole("button", { name: "Créer le client", exact: true }).click();
     await page.getByRole("heading", { name: /BROWSER VALIDATION CLIENT/ }).waitFor();
+    await page.getByRole("button", { name: "Embauche et comptes", exact: true }).click();
+    await page.getByText("Nouveau candidat", { exact: true }).click();
+    const candidateForm = page.locator("form").filter({ has: page.getByRole("button", { name: "Créer le dossier candidat", exact: true }) });
+    await candidateForm.locator('[name="name"]').fill("BROWSER HIRING VALIDATION");
+    await candidateForm.locator('[name="address"]').fill("TEST ADDRESS");
+    await candidateForm.locator('[name="identityReference"]').fill("TEST-ID");
+    await candidateForm.getByRole("button").click();
+    await page.getByRole("button", { name: "BROWSER HIRING VALIDATION · À vérifier", exact: true }).click();
+    const dossier = page.locator(".team-dossier");
+    await dossier.locator('input[type="file"]').setInputFiles({
+      name: testIdentity.name, mimeType: testIdentity.mime, buffer: Buffer.from(testIdentity.base64, "base64"),
+    });
+    await dossier.getByRole("button", { name: "Téléverser", exact: true }).click();
+    const preview = dossier.locator(".team-document-preview");
+    await preview.waitFor();
+    await page.waitForFunction(() => {
+      const image = document.querySelector<HTMLImageElement>(".team-document-preview");
+      return image?.complete && image.naturalWidth > 0;
+    });
+    await dossier.getByRole("button", { name: "Valider la pièce", exact: true }).click();
+    await dossier.locator("summary").filter({ hasText: "Brouillon de CDI" }).click();
+    for (const [key, value] of Object.entries(employmentExample)) {
+      await dossier.locator(`.team-contract-form [name="${key}"]`).fill(String(value));
+    }
+    await dossier.getByRole("button", { name: "Générer le brouillon de CDI", exact: true }).click();
+    const pdfLink = dossier.getByRole("link", { name: "Télécharger · EN–KM PDF", exact: true });
+    const downloaded = page.waitForEvent("download");
+    await pdfLink.click();
+    const download = await downloaded;
+    assert.equal(await download.failure(), null);
+    const stream = await download.createReadStream();
+    assert.ok(stream);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+    assert.equal(Buffer.concat(chunks).subarray(0, 5).toString(), "%PDF-");
+    await download.delete();
+    await page.route("**/api/agency/team/employment/*", (route) => route.fulfill({
+      status: 503, contentType: "application/json",
+      body: JSON.stringify({ error: { code: "PDF_BUSY", message: "PDF generation is busy. Please retry." } }),
+    }));
+    await pdfLink.click();
+    await page.locator(".team-error").filter({ hasText: "PDF_BUSY" }).waitFor();
+    assert.equal(new URL(page.url()).pathname, "/fr/admin");
+    await page.unroute("**/api/agency/team/employment/*");
     await page.reload(); await page.locator(".business-tabs").waitFor();
     await page.locator(".business-tabs").getByRole("button", { name: "Clients", exact: true }).click();
     await page.getByRole("heading", { name: /BROWSER VALIDATION CLIENT/ }).waitFor();

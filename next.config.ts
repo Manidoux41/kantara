@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   typescript: { tsconfigPath: process.env.AGENCY_TEST_TSCONFIG ?? "tsconfig.json" },
   serverExternalPackages: ["@sparticuz/chromium", "playwright-core"],
   outputFileTracingIncludes: {
-    "/api/agency/**": ["./public/fonts/NotoSansKhmer.ttf", "./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/agency/**": ["./public/fonts/NotoSansKhmer.ttf", "./node_modules/@sparticuz/chromium/bin/**", "./node_modules/playwright-core/browsers.json"],
   },
   outputFileTracingExcludes: {
     "/*": ["./.kantara-demo/**/*", "./.kantara-team/**/*"],

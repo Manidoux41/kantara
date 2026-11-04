@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import Image from "next/image";
 import { z } from "zod";
 import { teamMessages, type TeamMessage } from "@/lib/i18n/team";
 import { crmMessages } from "@/lib/i18n/crm";
@@ -84,6 +85,26 @@ export function TeamWorkspace({ locale, production = false, onAccount }: {
       });
       await send({ action: "upload", candidateId: selected, input: { kind: string(data, "kind"), name: file.name, mime: file.type, base64 } });
     } catch (cause) { setError(cause instanceof Error ? cause.message : t.error); }
+  }
+  async function downloadEmployment(candidateId: string, contractId: string) {
+    if (busy) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch(`${endpoint}/employment/${candidateId}`, { cache: "no-store" });
+      if (!response.ok) {
+        const payload = response.headers.get("content-type")?.includes("application/json")
+          ? envelope.parse(await response.json()) : null;
+        throw new Error(payload?.error ? `${payload.error.message} (${payload.error.code})` : `HTTP ${response.status}`);
+      }
+      if (!response.headers.get("content-type")?.startsWith("application/pdf")) throw new Error(t.error);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url; link.download = `kantara-employment-${contractId}-en-km.pdf`;
+      document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      setNotice(t.success);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : t.error); }
+    finally { setBusy(false); }
   }
   const candidate = view?.candidates?.find((item) => item.id === selected);
   const monthGrid = month ? calendarMonth(month) : null;
@@ -181,6 +202,11 @@ export function TeamWorkspace({ locale, production = false, onAccount }: {
             {candidate && <article className="team-dossier"><h3>{candidate.name}</h3><p>{candidate.address} · {candidate.identityReference}</p>
               <h4>{t.documents}</h4><p>{t.fileHelp}</p>
               {candidate.documents.map((document) => <div className="team-document" key={document.id}>
+                {document.mime.startsWith("image/") && <Image
+                  className="team-document-preview" src={`${endpoint}/documents/${document.id}?preview=1`}
+                  alt={document.kind === "IDENTITY" ? t.identity : t.residency}
+                  width={640} height={420} unoptimized
+                  onError={() => setError(t.error)} />}
                 <p><strong>{document.kind === "IDENTITY" ? t.identity : t.residency}</strong><br />{document.name} · {document.approvedBy ? t.approved : t.pending}</p>
                 <a className="text-link" href={`${endpoint}/documents/${document.id}`}>{t.download}</a>
                 {!candidate.activation && <button type="button" onClick={() => void send({ action: "review", candidateId: selected, documentId: document.id, approved: !document.approvedBy })}>{document.approvedBy ? t.revoke : t.approve}</button>}
@@ -208,7 +234,11 @@ export function TeamWorkspace({ locale, production = false, onAccount }: {
                   </label>)}<button>{t.generate}</button></form>
                 </details>
               </>}
-              {candidate.contract && <p><a className="button button-dark" href={`${endpoint}/employment/${candidate.id}`}>{t.download} · EN–KM PDF</a></p>}
+              {candidate.contract && <p><a className="button button-dark" href={`${endpoint}/employment/${candidate.id}`}
+                aria-disabled={busy} onClick={(event) => {
+                  event.preventDefault();
+                  if (candidate.contract) void downloadEmployment(candidate.id, candidate.contract.id);
+                }}>{t.download} · EN–KM PDF</a></p>}
               {candidate.contract && !candidate.activation && <form className="team-form" onSubmit={(event) => {
                 const data = values(event); void send({ action: "activate", candidateId: selected, contractId: candidate.contract?.id,
                   login: string(data, "login"), temporaryPassword: string(data, "temporaryPassword"), signedOn: string(data, "signedOn"),

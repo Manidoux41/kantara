@@ -16,8 +16,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return item;
     });
     const extension = document.mime === "application/pdf" ? "pdf" : document.mime === "image/png" ? "png" : "jpg";
+    const inline = new URL(request.url).searchParams.get("preview") === "1" && document.mime.startsWith("image/");
     download = new Response(Buffer.from(document.base64, "base64"), { headers: {
-      "Content-Type": document.mime, "Content-Disposition": `attachment; filename="hiring-${document.id}.${extension}"`,
+      "Content-Type": document.mime, "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="hiring-${document.id}.${extension}"`,
       "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox; default-src 'none'",
     } });
     return { data: null };

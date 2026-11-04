@@ -62,7 +62,9 @@ payloads in PostgreSQL. Maximum **20 photos and 20 documents per property**,
 JPEG/PNG/PDF, **2.5 MiB per file** (compatible with Vercel request-body limits).
 Only published property photos are public. Property documents and hiring
 documents require administrator authentication and are served as attachments,
-never through public storage URLs. No antivirus scanning is supplied; accept
+never through public storage URLs. Hiring images also have an authenticated,
+non-cached inline preview in the candidate dossier; PDFs remain downloads.
+No antivirus scanning is supplied; accept
 only trusted files. Hiring keeps its required approved identity document,
 reviewed optional residency document, unsigned EN–KM employment draft and
 explicit external legal-review/signature confirmations before account creation.
@@ -88,7 +90,9 @@ agency completion and Cambodian professional review.
 
 Production PDFs use bundled `@sparticuz/chromium` on Vercel and installed
 Chrome/`PDF_CHROMIUM_PATH` locally. Chromium binaries and the Khmer font are
-traced into PDF functions. Use at least 1 GiB function memory and allow a
+traced into PDF functions, along with Playwright's required `browsers.json`
+runtime registry. Employment downloads report failures in the workspace
+without navigating away from the dossier. Use at least 1 GiB function memory and allow a
 60-second function duration. Rendering blocks external network access and
 JavaScript. Draft/legal-review notices remain intentional: activating the
 administration does not certify contracts or add electronic signatures.

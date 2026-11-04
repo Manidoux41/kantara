@@ -1,9 +1,10 @@
 import { loadEnvConfig } from "@next/env";
 import { randomBytes, randomUUID } from "node:crypto";
-import { readdir, readFile, rm, access, mkdir, writeFile } from "node:fs/promises";
+import { readdir, readFile, rm, access, mkdir, writeFile, mkdtemp, copyFile } from "node:fs/promises";
 import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
-import { join } from "node:path";
+import { join, resolve, dirname, relative } from "node:path";
+import { tmpdir } from "node:os";
 import { Client } from "pg";
 import { databaseUrl } from "../lib/database-config";
 
@@ -30,6 +31,29 @@ async function stop(child: ChildProcess) {
   await Promise.race([once(child, "exit"), new Promise((resolve) => setTimeout(resolve, 10000))]);
   if (child.exitCode === null) { child.kill("SIGKILL"); await once(child, "exit"); }
 }
+async function verifyPdfTraces() {
+  const directory = await mkdtemp(join(tmpdir(), "kantara-pdf-trace-"));
+  try {
+    for (const route of ["team/employment/[id]", "admin/contracts/[id]/pdf"]) {
+      const tracePath = resolve(dist, "server/app/api/agency", route, "route.js.nft.json");
+      const trace: { files: string[] } = JSON.parse(await readFile(tracePath, "utf8"));
+      const files = trace.files.map((file) => resolve(dirname(tracePath), file));
+      for (const asset of ["node_modules/playwright-core/browsers.json", "public/fonts/NotoSansKhmer.ttf", "node_modules/@sparticuz/chromium/bin/chromium.br"]) {
+        if (!files.includes(resolve(asset))) throw new Error(`Missing PDF runtime asset in ${route}: ${asset}`);
+      }
+      if (route.startsWith("team/")) {
+        for (const file of files.filter((file) => file.startsWith(resolve("node_modules/playwright-core") + "/"))) {
+          const target = join(directory, relative(process.cwd(), file));
+          await mkdir(dirname(target), { recursive: true }); await copyFile(file, target);
+        }
+      }
+    }
+    const child = spawn(process.execPath, ["-e", "require('playwright-core'); console.log('Isolated serverless PDF runtime import passed.');"],
+      { cwd: directory, env: { ...process.env, NODE_PATH: "" }, stdio: "inherit" });
+    const [code] = await once(child, "exit");
+    if (code !== 0) throw new Error(`Traced PDF runtime import failed with exit code ${code}.`);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+}
 async function main() {
   try { await access(dist); throw new Error("Validation directory already exists; inspect it before reusing this test runner."); }
   catch (error) { if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) throw error; }
@@ -49,7 +73,10 @@ async function main() {
     }
     console.log("Created isolated PostgreSQL validation schema; production records are untouched.");
     await command(process.execPath, ["node_modules/tsx/dist/cli.mjs", "--conditions=react-server", "scripts/bootstrap-agency.ts"]);
-    if (production) await command(process.execPath, ["node_modules/next/dist/bin/next", "build"]);
+    if (production) {
+      await command(process.execPath, ["node_modules/next/dist/bin/next", "build"]);
+      await verifyPdfTraces();
+    }
     server = spawn(process.execPath, ["node_modules/next/dist/bin/next", production ? "start" : "dev", "--port", port], { env: environment, stdio: ["ignore", "pipe", "pipe"] });
     server.stdout?.on("data", (chunk: Buffer) => { serverLog = (serverLog + chunk.toString()).slice(-8000); });
     server.stderr?.on("data", (chunk: Buffer) => { serverLog = (serverLog + chunk.toString()).slice(-8000); });

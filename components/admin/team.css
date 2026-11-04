@@ -23,6 +23,7 @@
 .team-cards h3 { font-family: var(--serif); font-size: 24px; font-weight: 400; margin-block: 0 16px; }
 .team-cards p, .team-cards time, .team-dossier p { font-size: 14px; line-height: 1.8; }
 .team-document { display: flex; gap: 18px; align-items: center; justify-content: space-between; padding-block: 14px; border-block-end: 1px solid var(--border); flex-wrap: wrap; }
+.team-document-preview { display: block; width: min(100%, 480px); height: auto; max-height: 360px; object-fit: contain; background: var(--accent-soft); border: 1px solid var(--border); border-radius: 8px; }
 .team-contract-form { max-width: none; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
 .team-hiring details, .team-password { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-block: 20px; }
 .team-workspace summary { cursor: pointer; min-height: 36px; line-height: 1.8; }
